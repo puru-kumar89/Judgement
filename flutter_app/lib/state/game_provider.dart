@@ -159,36 +159,24 @@ class GameNotifier extends StateNotifier<GameState> {
 
   void startGame() {
     if (state.players.length < 3) return;
-    
-    // Generate rounds
-    List<int> cardsSequence = [];
-    if (state.roundStyle == 'countdown') {
-      for (var c = state.startingCards; c >= 1; c--) {
-        cardsSequence.add(c);
-      }
-    } else {
-      for (var c = 0; c < state.startingCards; c++) {
-         cardsSequence.add(state.startingCards);
-      }
-    }
 
     final List<String> activeSuits = state.includeNoTrump 
         ? ['♠️', '♥️', '♣️', '♦️', 'NT'] 
         : ['♠️', '♥️', '♣️', '♦️'];
-        
-    List<GameRound> generatedRounds = [];
-    for (int i = 0; i < cardsSequence.length; i++) {
-      generatedRounds.add(GameRound(
-        cards: cardsSequence[i],
-        trump: activeSuits[i % activeSuits.length],
-      ));
-    }
+
+    // Start with first round only; subsequent rounds extend endlessly.
+    final firstRound = GameRound(
+      cards: state.startingCards,
+      trump: activeSuits[0],
+    );
 
     state = state.copyWith(
-      rounds: generatedRounds,
+      rounds: [firstRound],
       currentRoundIdx: 0,
       phase: GamePhase.bidding,
-      players: state.players.map((p) => p.copyWith(totalScore: 0, roundChange: 0)).toList()
+      players: state.players.map((p) => p.copyWith(totalScore: 0, roundChange: 0)).toList(),
+      roundStep: -1,
+      trumpIndex: 0,
     );
   }
 
@@ -254,20 +242,42 @@ class GameNotifier extends StateNotifier<GameState> {
   }
 
   void nextRound() {
-    if (state.currentRoundIdx >= state.rounds.length - 1) {
-      state = state.copyWith(phase: GamePhase.finished);
-    } else {
-      // Rotate Dealer
-      final rotatedPlayers = List<Player>.from(state.players);
-      final firstPlayer = rotatedPlayers.removeAt(0);
-      rotatedPlayers.add(firstPlayer);
+    // Rotate Dealer
+    final rotatedPlayers = List<Player>.from(state.players);
+    final firstPlayer = rotatedPlayers.removeAt(0);
+    rotatedPlayers.add(firstPlayer);
 
-      state = state.copyWith(
-        currentRoundIdx: state.currentRoundIdx + 1,
-        players: rotatedPlayers,
-        phase: GamePhase.bidding,
-      );
+    // Determine next cards using a sawtooth pattern between 1 and startingCards
+    final currentCards = state.rounds[state.currentRoundIdx].cards;
+    int step = state.roundStep;
+    int nextCards = currentCards + step;
+    if (nextCards < 1) {
+      step = 1;
+      nextCards = 2; // bounce up
+    } else if (nextCards > state.startingCards) {
+      step = -1;
+      nextCards = state.startingCards - 1;
     }
+
+    final activeSuits = state.includeNoTrump 
+        ? ['♠️', '♥️', '♣️', '♦️', 'NT'] 
+        : ['♠️', '♥️', '♣️', '♦️'];
+    final nextTrumpIndex = (state.trumpIndex + 1) % activeSuits.length;
+
+    final newRounds = List<GameRound>.from(state.rounds);
+    newRounds.add(GameRound(
+      cards: nextCards,
+      trump: activeSuits[nextTrumpIndex],
+    ));
+
+    state = state.copyWith(
+      currentRoundIdx: state.currentRoundIdx + 1,
+      players: rotatedPlayers,
+      rounds: newRounds,
+      roundStep: step,
+      trumpIndex: nextTrumpIndex,
+      phase: GamePhase.bidding,
+    );
   }
 
   void forceEndGame() {

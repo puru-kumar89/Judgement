@@ -20,6 +20,8 @@ class GameState {
   final int overtrickBonus;
   final bool includeNoTrump;
   final bool prefsLoaded;
+  final int roundStep;
+  final int trumpIndex;
   
   GameState({
     this.phase = GamePhase.setup,
@@ -34,6 +36,8 @@ class GameState {
     this.overtrickBonus = 1,
     this.includeNoTrump = false,
     this.prefsLoaded = false,
+    this.roundStep = -1,
+    this.trumpIndex = 0,
   });
 
   GameState copyWith({
@@ -49,6 +53,8 @@ class GameState {
     int? overtrickBonus,
     bool? includeNoTrump,
     bool? prefsLoaded,
+    int? roundStep,
+    int? trumpIndex,
   }) {
     return GameState(
       phase: phase ?? this.phase,
@@ -63,6 +69,8 @@ class GameState {
       overtrickBonus: overtrickBonus ?? this.overtrickBonus,
       includeNoTrump: includeNoTrump ?? this.includeNoTrump,
       prefsLoaded: prefsLoaded ?? this.prefsLoaded,
+      roundStep: roundStep ?? this.roundStep,
+      trumpIndex: trumpIndex ?? this.trumpIndex,
     );
   }
 }
