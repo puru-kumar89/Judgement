@@ -144,7 +144,7 @@ class PremiumRowCard extends ConsumerWidget {
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
-              color: theme.surfaceCard.withValues(alpha: theme.isDark ? 0.7 : 0.92),
+              color: theme.surfaceCard.withValues(alpha: theme.isDark ? 0.8 : 0.92),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: isActive ? theme.accent.withValues(alpha: 0.45) : theme.borderCard,

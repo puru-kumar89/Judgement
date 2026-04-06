@@ -15,8 +15,8 @@ class AnimatedBackground extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF0F1116),
-              Color(0xFF0B0C11),
+              Color(0xFF0D0F14),
+              Color(0xFF08090D),
             ],
           )
         : const LinearGradient(
@@ -32,27 +32,15 @@ class AnimatedBackground extends ConsumerWidget {
       decoration: BoxDecoration(gradient: gradient),
       child: Stack(
         children: [
-          // Crimson orb (top-left)
-          Positioned(
-            top: -120,
-            left: -120,
-            child: _orb(theme.accent.withValues(alpha: 0.18), 360),
-          ),
-          // Teal/silver orb (bottom-right)
-          Positioned(
-            bottom: -140,
-            right: -140,
-            child: _orb(
-              (theme.isDark ? Colors.white : theme.accent2).withValues(alpha: 0.12),
-              460,
-            ),
-          ),
-          // Secondary soft orb
-          Positioned(
-            top: 180,
-            right: -80,
-            child: _orb(Colors.black.withValues(alpha: 0.04), 240),
-          ),
+          if (theme.isDark) ...[
+            Positioned(top: -140, left: -140, child: _orb(theme.accent.withValues(alpha: 0.22), 420)),
+            Positioned(bottom: -120, right: -160, child: _orb(const Color(0xFF0F3A3A).withValues(alpha: 0.25), 520)),
+            Positioned(top: 160, right: -60, child: _orb(Colors.black.withValues(alpha: 0.18), 260)),
+          ] else ...[
+            Positioned(top: -120, left: -120, child: _orb(theme.accent.withValues(alpha: 0.18), 360)),
+            Positioned(bottom: -140, right: -140, child: _orb((theme.isDark ? Colors.white : theme.accent2).withValues(alpha: 0.12), 460)),
+            Positioned(top: 180, right: -80, child: _orb(Colors.black.withValues(alpha: 0.04), 240)),
+          ],
           child,
         ],
       ),

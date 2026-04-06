@@ -16,6 +16,7 @@ class BiddingScreen extends ConsumerWidget {
     final notifier = ref.read(gameProvider.notifier);
     final currentRound = state.rounds[state.currentRoundIdx];
     final theme = ref.watch(themeProvider);
+    final positions = ['Sitting South', 'Sitting West', 'Sitting North', 'Sitting East'];
 
     int totalBids = 0;
     for (var p in state.players) {
@@ -34,8 +35,8 @@ class BiddingScreen extends ConsumerWidget {
             badgeWidget: SummaryCard.buildTrumpBadge(currentRound.trump),
             background: LinearGradient(
               colors: [
-                theme.invertedCard,
-                theme.invertedCard.withValues(alpha: 0.85),
+                const Color(0xFF151820),
+                const Color(0xFF0F1117),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -78,7 +79,10 @@ class BiddingScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(p.name, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: theme.textMain)),
-                            Text('Score: ${p.totalScore}', style: TextStyle(fontSize: 11, color: theme.textMuted, fontWeight: FontWeight.w600)),
+                            Text(
+                              positions[idx % positions.length],
+                              style: TextStyle(fontSize: 12, color: theme.textMuted, fontWeight: FontWeight.w600),
+                            ),
                           ],
                         ),
                       ],
@@ -95,27 +99,43 @@ class BiddingScreen extends ConsumerWidget {
             );
           }),
           
-          if (isHook) Container(
-            margin: const EdgeInsets.only(top: 8, bottom: 8),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.danger.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: theme.danger.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.warning_amber_rounded, color: theme.danger),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'The "Hook" is active! Total bids equal cards dealt. Dealer must adjust.',
-                    style: TextStyle(color: theme.danger, fontWeight: FontWeight.w700, fontSize: 13),
+          if (isHook)
+            Container(
+              margin: const EdgeInsets.only(top: 8, bottom: 12),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFF650D1C),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: theme.accent.withValues(alpha: 0.5)),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.accent.withValues(alpha: 0.28),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  )
+                ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Hook Warning', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Sum of bids cannot equal ${currentRound.cards}. Dealer must adjust.',
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.86), fontSize: 13),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
           
           const SizedBox(height: 18),
           PrimaryButton(

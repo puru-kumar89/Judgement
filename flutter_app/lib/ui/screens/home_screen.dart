@@ -94,7 +94,7 @@ class HomeScreen extends ConsumerWidget {
           ? null
           : BottomNav(
               active: switch (phase) {
-                GamePhase.bidding => NavDestination.rules,
+                GamePhase.bidding => NavDestination.history,
                 GamePhase.results => NavDestination.history,
                 GamePhase.leaderboard => NavDestination.score,
                 GamePhase.finished => NavDestination.score,

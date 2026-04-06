@@ -9,6 +9,7 @@ class AppThemeData {
   final Color invertedCard;
   final Color accent;
   final Color accent2;
+  final Color overlay;
   final Color textMain;
   final Color textMuted;
   
@@ -24,6 +25,7 @@ class AppThemeData {
     required this.invertedCard,
     required this.accent,
     required this.accent2,
+    required this.overlay,
     required this.textMain,
     required this.textMuted,
   });
@@ -37,6 +39,7 @@ class AppThemeData {
       invertedCard: Color(0xFF1B1F2A),
       accent: Color(0xFFB1002C),
       accent2: Color(0xFFDC143C),
+      overlay: Color(0x0D000000),
       textMain: Color(0xFF0F172A),
       textMuted: Color(0xFF6B7280),
     );
@@ -46,13 +49,14 @@ class AppThemeData {
     return const AppThemeData(
       isDark: true,
       background: Color(0xFF0F1116),
-      surfaceCard: Color(0xFF151820),
-      borderCard: Color(0x19FFFFFF),
-      invertedCard: Color(0xFF0C0F14),
-      accent: Color(0xFFB1002C),
-      accent2: Color(0xFFDC143C),
-      textMain: Color(0xFFF8FAFC),
-      textMuted: Color(0xFF9CA3AF),
+      surfaceCard: Color(0xFF16191F),
+      borderCard: Color(0x33242A33),
+      invertedCard: Color(0xFF0E1016),
+      accent: Color(0xFFD00231),
+      accent2: Color(0xFFE3123C),
+      overlay: Color(0x1AFFFFFF),
+      textMain: Color(0xFFF5F7FA),
+      textMuted: Color(0xFFA7B0C0),
     );
   }
 
