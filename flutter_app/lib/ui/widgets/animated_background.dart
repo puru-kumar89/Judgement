@@ -1,88 +1,77 @@
-import 'dart:math';
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import '../../theme/theme_provider.dart';
 
-class AnimatedBackground extends StatefulWidget {
+class AnimatedBackground extends ConsumerWidget {
   final Widget child;
   const AnimatedBackground({super.key, required this.child});
 
   @override
-  State<AnimatedBackground> createState() => _AnimatedBackgroundState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = ref.watch(themeProvider);
 
-class _AnimatedBackgroundState extends State<AnimatedBackground> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+    final Gradient gradient = theme.isDark
+        ? const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0F1116),
+              Color(0xFF0B0C11),
+            ],
+          )
+        : const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFF8FBFF),
+              Color(0xFFF2F6FB),
+            ],
+          );
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-       vsync: this,
-       duration: const Duration(seconds: 15),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Base dark gradient
-        Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF0b1024), Color(0xFF0c1636)],
+    return Container(
+      decoration: BoxDecoration(gradient: gradient),
+      child: Stack(
+        children: [
+          // Crimson orb (top-left)
+          Positioned(
+            top: -120,
+            left: -120,
+            child: _orb(theme.accent.withValues(alpha: 0.18), 360),
+          ),
+          // Teal/silver orb (bottom-right)
+          Positioned(
+            bottom: -140,
+            right: -140,
+            child: _orb(
+              (theme.isDark ? Colors.white : theme.accent2).withValues(alpha: 0.12),
+              460,
             ),
           ),
+          // Secondary soft orb
+          Positioned(
+            top: 180,
+            right: -80,
+            child: _orb(Colors.black.withValues(alpha: 0.04), 240),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _orb(Color color, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            color,
+            color.withValues(alpha: 0.0),
+          ],
         ),
-        AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return Stack(
-              children: [
-                Positioned(
-                  top: MediaQuery.of(context).size.height * 0.1 - (sin(_controller.value * pi) * 40),
-                  left: MediaQuery.of(context).size.width * 0.2 + (cos(_controller.value * pi) * 60),
-                  child: Container(
-                    width: 420,
-                    height: 420,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0x387bd4ff), // rgba(123, 212, 255, 0.22)
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: MediaQuery.of(context).size.height * 0.05 + (cos(_controller.value * pi) * 50),
-                  right: MediaQuery.of(context).size.width * 0.1 - (sin(_controller.value * pi) * 40),
-                  child: Container(
-                    width: 500,
-                    height: 500,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0x33b18bff), // rgba(177, 139, 255, 0.2)
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-        // Blur layer to diffuse the blobs
-        BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 90, sigmaY: 90),
-          child: Container(color: Colors.transparent),
-        ),
-        // Foreground content
-        widget.child,
-      ],
+      ),
     );
   }
 }

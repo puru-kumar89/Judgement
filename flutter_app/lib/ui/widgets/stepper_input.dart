@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import '../../theme/theme_provider.dart';
 
-class StepperInput extends StatelessWidget {
+class StepperInput extends ConsumerWidget {
   final int value;
   final int min;
   final int max;
   final ValueChanged<int> onChanged;
+  final bool compact;
 
   const StepperInput({
     super.key,
@@ -13,39 +15,45 @@ class StepperInput extends StatelessWidget {
     this.min = 0,
     required this.max,
     required this.onChanged,
+    this.compact = false,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = ref.watch(themeProvider);
+    
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        border: Border.all(color: AppTheme.cardBorder),
-        borderRadius: BorderRadius.circular(14),
+        color: theme.isDark ? theme.surfaceCard.withValues(alpha: 0.6) : Colors.white,
+        borderRadius: BorderRadius.circular(999), // Pill shape
+        border: Border.all(color: theme.borderCard),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 4 : 6, vertical: compact ? 2 : 4),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           _StepperButton(
             icon: Icons.remove,
             onTap: value > min ? () => onChanged(value - 1) : null,
+            compact: compact,
           ),
           Container(
-            width: 40,
+            width: compact ? 38 : 50,
             alignment: Alignment.center,
             child: Text(
               '$value',
-              style: const TextStyle(
-                fontSize: 20,
+              style: TextStyle(
+                fontFamily: 'Space Grotesk',
+                fontSize: compact ? 18 : 22,
                 fontWeight: FontWeight.w800,
-                color: AppTheme.textMain,
+                color: theme.textMain,
               ),
             ),
           ),
           _StepperButton(
             icon: Icons.add,
             onTap: value < max ? () => onChanged(value + 1) : null,
+            compact: compact,
           ),
         ],
       ),
@@ -53,30 +61,40 @@ class StepperInput extends StatelessWidget {
   }
 }
 
-class _StepperButton extends StatelessWidget {
+class _StepperButton extends ConsumerWidget {
   final IconData icon;
   final VoidCallback? onTap;
+  final bool compact;
 
-  const _StepperButton({required this.icon, this.onTap});
+  const _StepperButton({required this.icon, this.onTap, this.compact = false});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = ref.watch(themeProvider);
     final enabled = onTap != null;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(100),
         child: Container(
-          padding: const EdgeInsets.all(8),
+          width: compact ? 34 : 40,
+          height: compact ? 34 : 40,
           decoration: BoxDecoration(
-            color: enabled ? Colors.white.withOpacity(0.08) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            color: enabled ? (theme.isDark ? theme.surfaceCard : Colors.white) : Colors.transparent,
+            shape: BoxShape.circle,
+            boxShadow: enabled ? [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: theme.isDark ? 0.2 : 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+            ] : null,
           ),
           child: Icon(
             icon,
             size: 20,
-            color: enabled ? AppTheme.accent : AppTheme.textMuted.withOpacity(0.3),
+            color: enabled ? theme.textMain : theme.textMuted.withValues(alpha: 0.4),
           ),
         ),
       ),

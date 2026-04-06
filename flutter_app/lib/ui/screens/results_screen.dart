@@ -3,7 +3,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../state/game_provider.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/stepper_input.dart';
-import '../../theme/app_theme.dart';
+import '../../theme/theme_provider.dart';
+import '../widgets/player_avatar.dart';
+import '../widgets/primary_button.dart';
 
 class ResultsScreen extends ConsumerWidget {
   const ResultsScreen({super.key});
@@ -13,6 +15,7 @@ class ResultsScreen extends ConsumerWidget {
     final state = ref.watch(gameProvider);
     final notifier = ref.read(gameProvider.notifier);
     final currentRound = state.rounds[state.currentRoundIdx];
+    final theme = ref.watch(themeProvider);
 
     int totalActuals = 0;
     for (var p in state.players) {
@@ -21,70 +24,78 @@ class ResultsScreen extends ConsumerWidget {
     bool isValid = totalActuals == currentRound.cards;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Round ${state.currentRoundIdx + 1} Results',
-            style: Theme.of(context).textTheme.headlineMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: isValid ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isValid ? Colors.green.withOpacity(0.5) : Colors.red.withOpacity(0.5)),
+          SummaryCard(
+            title: 'RESULTS',
+            heroValue: 'Rnd ${state.currentRoundIdx + 1}',
+            badgeWidget: SummaryCard.buildTrumpBadge(currentRound.trump),
+            background: LinearGradient(
+              colors: [
+                theme.invertedCard,
+                theme.invertedCard.withValues(alpha: 0.9),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            alignment: Alignment.center,
-            child: Text(
-              '$totalActuals / ${currentRound.cards} Tricks Accounted',
-              style: TextStyle(
-                color: isValid ? Colors.greenAccent : Colors.redAccent,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          GlassCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            bottomContent: Row(
               children: [
-                Text('Actual Tricks Won', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 16),
-                ...state.players.map((p) {
-                  int bid = currentRound.bids[p.id] ?? 0;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(p.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                            Text('Bid: $bid', style: const TextStyle(fontSize: 12, color: AppTheme.accent)),
-                          ],
-                        ),
-                        StepperInput(
-                          value: currentRound.actuals[p.id] ?? 0,
-                          max: currentRound.cards,
-                          onChanged: (val) => notifier.setActual(p.id, val),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
+                Icon(isValid ? Icons.check_circle : Icons.error_outline, 
+                    color: isValid ? theme.success : theme.danger, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  '$totalActuals / ${currentRound.cards} Tricks',
+                  style: TextStyle(color: isValid ? theme.success : theme.danger, fontWeight: FontWeight.bold, letterSpacing: 1),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-          ElevatedButton(
+          
+          const SizedBox(height: 20),
+          Text('ACTUAL TRICKS WON', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: theme.textMuted, letterSpacing: 1.4)),
+          const SizedBox(height: 10),
+          
+          ...state.players.map((p) {
+            int bid = currentRound.bids[p.id] ?? 0;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: PremiumRowCard(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        PlayerAvatar(name: p.name, solid: false),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(p.name, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: theme.textMain)),
+                            Text('Bid: $bid', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textMuted)),
+                          ],
+                        ),
+                      ],
+                    ),
+                    StepperInput(
+                      value: currentRound.actuals[p.id] ?? 0,
+                      max: currentRound.cards,
+                      compact: true,
+                      onChanged: (val) => notifier.setActual(p.id, val),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+          
+          const SizedBox(height: 18),
+          PrimaryButton(
+            label: 'Calculate Scores',
+            icon: Icons.calculate,
             onPressed: isValid ? () => notifier.calculateScores() : null,
-            child: const Text('Calculate Scores'),
           ),
         ],
       ),

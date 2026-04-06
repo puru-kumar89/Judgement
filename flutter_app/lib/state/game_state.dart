@@ -18,6 +18,7 @@ class GameState {
   final int successMultiplier;
   final int penaltyMultiplier;
   final int overtrickBonus;
+  final bool includeNoTrump;
   
   GameState({
     this.phase = GamePhase.setup,
@@ -30,6 +31,7 @@ class GameState {
     this.successMultiplier = 10,
     this.penaltyMultiplier = 10,
     this.overtrickBonus = 1,
+    this.includeNoTrump = false,
   });
 
   GameState copyWith({
@@ -43,6 +45,7 @@ class GameState {
     int? successMultiplier,
     int? penaltyMultiplier,
     int? overtrickBonus,
+    bool? includeNoTrump,
   }) {
     return GameState(
       phase: phase ?? this.phase,
@@ -55,6 +58,7 @@ class GameState {
       successMultiplier: successMultiplier ?? this.successMultiplier,
       penaltyMultiplier: penaltyMultiplier ?? this.penaltyMultiplier,
       overtrickBonus: overtrickBonus ?? this.overtrickBonus,
+      includeNoTrump: includeNoTrump ?? this.includeNoTrump,
     );
   }
 }

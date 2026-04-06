@@ -1,62 +1,139 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class AppTheme {
-  static const Color bgDeep = Color(0xFF0b1024);
-  static const Color bgInk = Color(0xFF0c1636);
-  static const Color accent = Color(0xFF7bd4ff);
-  static const Color accentStrong = Color(0xFF55b0ff);
-  static const Color accent2 = Color(0xFFb18bff);
-  static const Color success = Color(0xFF3dd598);
-  static const Color danger = Color(0xFFff6b6b);
-  static const Color textMain = Color(0xFFe9eeff);
-  static const Color textMuted = Color(0xFF9fb0d2);
-  static const Color cardBorder = Color(0x24FFFFFF); // rgba(255, 255, 255, 0.14)
-  static const Color panel = Color(0x0AFFFFFF); // rgba(255, 255, 255, 0.04)
+class AppThemeData {
+  final bool isDark;
+  final Color background;
+  final Color surfaceCard;
+  final Color borderCard;
+  final Color invertedCard;
+  final Color accent;
+  final Color accent2;
+  final Color textMain;
+  final Color textMuted;
+  
+  final Color success = const Color(0xFF34C759); 
+  final Color danger = const Color(0xFFE63946);
+  final Color warning = const Color(0xFFFF9500);
 
-  static ThemeData get theme {
+  const AppThemeData({
+    required this.isDark,
+    required this.background,
+    required this.surfaceCard,
+    required this.borderCard,
+    required this.invertedCard,
+    required this.accent,
+    required this.accent2,
+    required this.textMain,
+    required this.textMuted,
+  });
+
+  factory AppThemeData.light() {
+    return const AppThemeData(
+      isDark: false,
+      background: Color(0xFFF5F8FA),
+      surfaceCard: Color(0xFFFFFFFF),
+      borderCard: Color(0xFFE9EDF2),
+      invertedCard: Color(0xFF1B1F2A),
+      accent: Color(0xFFB1002C),
+      accent2: Color(0xFFDC143C),
+      textMain: Color(0xFF0F172A),
+      textMuted: Color(0xFF6B7280),
+    );
+  }
+
+  factory AppThemeData.dark() {
+    return const AppThemeData(
+      isDark: true,
+      background: Color(0xFF0F1116),
+      surfaceCard: Color(0xFF151820),
+      borderCard: Color(0x19FFFFFF),
+      invertedCard: Color(0xFF0C0F14),
+      accent: Color(0xFFB1002C),
+      accent2: Color(0xFFDC143C),
+      textMain: Color(0xFFF8FAFC),
+      textMuted: Color(0xFF9CA3AF),
+    );
+  }
+
+  ThemeData get themeData {
     return ThemeData(
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: bgDeep,
-      colorScheme: const ColorScheme.dark(
+      useMaterial3: true,
+      brightness: isDark ? Brightness.dark : Brightness.light,
+      scaffoldBackgroundColor: Colors.transparent,
+      colorScheme: ColorScheme(
+        brightness: isDark ? Brightness.dark : Brightness.light,
         primary: accent,
+        onPrimary: Colors.white,
         secondary: accent2,
-        surface: bgInk,
+        onSecondary: Colors.white,
         error: danger,
+        onError: Colors.white,
+        surface: background,
+        onSurface: textMain,
       ),
-      textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme).copyWith(
-        displayLarge: GoogleFonts.spaceGrotesk(
+      textTheme: TextTheme(
+        headlineMedium: GoogleFonts.spaceGrotesk(
+          fontSize: 32,
+          fontWeight: FontWeight.w800,
           color: textMain,
-          fontWeight: FontWeight.w700,
+          letterSpacing: -1.0,
         ),
-        headlineMedium: GoogleFonts.plusJakartaSans(
+        displayMedium: GoogleFonts.spaceGrotesk(
+          fontSize: 48,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+          letterSpacing: -1.5,
+        ),
+        titleLarge: GoogleFonts.plusJakartaSans(
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
           color: textMain,
-          fontWeight: FontWeight.w700,
         ),
         bodyLarge: GoogleFonts.plusJakartaSans(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
           color: textMain,
         ),
         bodyMedium: GoogleFonts.plusJakartaSans(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
           color: textMuted,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: accent,
-          foregroundColor: const Color(0xFF031029),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           textStyle: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.w700,
             fontSize: 16,
-            letterSpacing: 0.1,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
           ),
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          elevation: 10,
+          shadowColor: accent.withValues(alpha: 0.3),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(100),
           ),
-          elevation: 8,
-          shadowColor: accent.withOpacity(0.45),
+          minimumSize: const Size(double.infinity, 56),
         ),
       ),
     );
   }
+}
+
+// Legacy compatibility shim for original screens
+class AppTheme {
+  static const Color bgDeep = Color(0xFF0b1024);
+  static const Color bgInk = Color(0xFF0c1636);
+  static const Color accent = Color(0xFFE63946);
+  static const Color accentStrong = Color(0xFF55b0ff);
+  static const Color accent2 = Color(0xFFb18bff);
+  static const Color success = Color(0xFF34C759);
+  static const Color danger = Color(0xFFE63946);
+  static const Color textMain = Color(0xFFe9eeff);
+  static const Color textMuted = Color(0xFF9fb0d2);
+  static const Color cardBorder = Color(0x24FFFFFF);
+  static const Color panel = Color(0x0AFFFFFF);
 }

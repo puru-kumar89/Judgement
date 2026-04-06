@@ -26,6 +26,7 @@ class GameNotifier extends StateNotifier<GameState> {
     int? successMultiplier,
     int? penaltyMultiplier,
     int? overtrickBonus,
+    bool? includeNoTrump,
   }) {
     state = state.copyWith(
       startingCards: startingCards,
@@ -34,6 +35,7 @@ class GameNotifier extends StateNotifier<GameState> {
       successMultiplier: successMultiplier,
       penaltyMultiplier: penaltyMultiplier,
       overtrickBonus: overtrickBonus,
+      includeNoTrump: includeNoTrump,
     );
   }
 
@@ -57,6 +59,19 @@ class GameNotifier extends StateNotifier<GameState> {
     state = state.copyWith(players: newList);
   }
 
+  void setDealer(String playerId) {
+    if (state.players.isEmpty) return;
+    if (state.players.last.id == playerId) return;
+    
+    // Rotate the table order relative to the selected dealer
+    var currentPlayers = List<Player>.from(state.players);
+    while (currentPlayers.last.id != playerId) {
+      var first = currentPlayers.removeAt(0);
+      currentPlayers.add(first);
+    }
+    state = state.copyWith(players: currentPlayers);
+  }
+
   void startGame() {
     if (state.players.length < 3) return;
     
@@ -72,13 +87,17 @@ class GameNotifier extends StateNotifier<GameState> {
       }
     }
 
-    final random = Random();
-    List<GameRound> generatedRounds = cardsSequence.map((cards) {
-      return GameRound(
-        cards: cards,
-        trump: _suits[random.nextInt(_suits.length)],
-      );
-    }).toList();
+    final List<String> activeSuits = state.includeNoTrump 
+        ? ['♠️', '♥️', '♣️', '♦️', 'NT'] 
+        : ['♠️', '♥️', '♣️', '♦️'];
+        
+    List<GameRound> generatedRounds = [];
+    for (int i = 0; i < cardsSequence.length; i++) {
+      generatedRounds.add(GameRound(
+        cards: cardsSequence[i],
+        trump: activeSuits[i % activeSuits.length],
+      ));
+    }
 
     state = state.copyWith(
       rounds: generatedRounds,
@@ -153,14 +172,61 @@ class GameNotifier extends StateNotifier<GameState> {
     if (state.currentRoundIdx >= state.rounds.length - 1) {
       state = state.copyWith(phase: GamePhase.finished);
     } else {
+      // Rotate Dealer
+      final rotatedPlayers = List<Player>.from(state.players);
+      final firstPlayer = rotatedPlayers.removeAt(0);
+      rotatedPlayers.add(firstPlayer);
+
       state = state.copyWith(
         currentRoundIdx: state.currentRoundIdx + 1,
+        players: rotatedPlayers,
         phase: GamePhase.bidding,
       );
     }
   }
 
+  void forceEndGame() {
+    state = state.copyWith(phase: GamePhase.finished);
+  }
+
   void restartGame() {
     state = state.copyWith(phase: GamePhase.setup);
+  }
+
+  void goBack() {
+    if (state.phase == GamePhase.setup) return;
+
+    if (state.phase == GamePhase.bidding) {
+      if (state.currentRoundIdx == 0) {
+        state = state.copyWith(phase: GamePhase.setup);
+      } else {
+        // We came from the leaderboard of the previous round. Un-rotate players.
+        final unrotatedPlayers = List<Player>.from(state.players);
+        final lastPlayer = unrotatedPlayers.removeLast();
+        unrotatedPlayers.insert(0, lastPlayer);
+        
+        state = state.copyWith(
+          currentRoundIdx: state.currentRoundIdx - 1,
+          players: unrotatedPlayers,
+          phase: GamePhase.leaderboard,
+        );
+      }
+    } else if (state.phase == GamePhase.results) {
+      state = state.copyWith(phase: GamePhase.bidding);
+    } else if (state.phase == GamePhase.leaderboard) {
+      // Revert the scores calculating and go to results
+      final revertedPlayers = state.players.map((p) => p.copyWith(
+        totalScore: p.totalScore - p.roundChange,
+        roundChange: 0,
+      )).toList();
+      
+      state = state.copyWith(
+        players: revertedPlayers,
+        phase: GamePhase.results,
+      );
+    } else if (state.phase == GamePhase.finished) {
+      // Finished comes from leaderboard of current index
+      state = state.copyWith(phase: GamePhase.leaderboard);
+    }
   }
 }

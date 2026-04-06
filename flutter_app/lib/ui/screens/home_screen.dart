@@ -3,11 +3,13 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../state/game_provider.dart';
 import '../../state/game_state.dart';
 import '../widgets/animated_background.dart';
+import '../widgets/bottom_nav.dart';
 import 'setup_screen.dart';
 import 'bidding_screen.dart';
 import 'results_screen.dart';
 import 'leaderboard_screen.dart';
-import '../../theme/app_theme.dart';
+import 'podium_screen.dart';
+import '../../theme/theme_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -15,6 +17,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final phase = ref.watch(gameProvider.select((state) => state.phase));
+    final theme = ref.watch(themeProvider);
 
     Widget currentScreen;
     switch (phase) {
@@ -28,8 +31,10 @@ class HomeScreen extends ConsumerWidget {
         currentScreen = const ResultsScreen(key: ValueKey('results'));
         break;
       case GamePhase.leaderboard:
-      case GamePhase.finished:
         currentScreen = const LeaderboardScreen(key: ValueKey('leaderboard'));
+        break;
+      case GamePhase.finished:
+        currentScreen = const PodiumScreen(key: ValueKey('podium'));
         break;
     }
 
@@ -39,40 +44,45 @@ class HomeScreen extends ConsumerWidget {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 24, bottom: 8),
-                child: Center(
-                  child: RichText(
-                    text: TextSpan(
-                      style: const TextStyle(
-                        fontFamily: 'Space Grotesk',
-                        fontSize: 48,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -2,
-                        color: Colors.white,
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (phase == GamePhase.setup)
+                      const SizedBox(width: 48)
+                    else
+                      IconButton(
+                        icon: Icon(Icons.arrow_back_ios_new, color: theme.textMain),
+                        onPressed: () => ref.read(gameProvider.notifier).goBack(),
                       ),
-                      children: [
-                        const TextSpan(text: 'Ka'),
-                        TextSpan(
-                          text: 'at',
-                          style: TextStyle(color: AppTheme.accent),
+                    RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontFamily: 'Space Grotesk',
+                          fontSize: 38,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -2,
+                          color: theme.textMain,
                         ),
-                      ],
+                        children: [
+                          const TextSpan(text: 'Ka'),
+                          TextSpan(
+                            text: 'at',
+                            style: TextStyle(color: theme.accent),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    IconButton(
+                      icon: Icon(theme.isDark ? Icons.light_mode : Icons.dark_mode, color: theme.textMuted),
+                      onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
+                    ),
+                  ],
                 ),
               ),
               Expanded(
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  transitionBuilder: (Widget child, Animation<double> animation) {
-                    return SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0.0, 0.05),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: FadeTransition(opacity: animation, child: child),
-                    );
-                  },
+                  duration: const Duration(milliseconds: 200),
                   child: currentScreen,
                 ),
               ),
@@ -80,6 +90,17 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ),
+      bottomNavigationBar: phase == GamePhase.setup
+          ? null
+          : BottomNav(
+              active: switch (phase) {
+                GamePhase.bidding => NavDestination.rules,
+                GamePhase.results => NavDestination.history,
+                GamePhase.leaderboard => NavDestination.score,
+                GamePhase.finished => NavDestination.score,
+                GamePhase.setup => NavDestination.rules,
+              },
+            ),
     );
   }
 }
