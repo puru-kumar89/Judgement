@@ -24,9 +24,9 @@ class StepperInput extends ConsumerWidget {
     
     return Container(
       decoration: BoxDecoration(
-        color: theme.isDark ? const Color(0xFF0F1218) : Colors.white,
+        color: theme.isDark ? const Color(0xFF12151C) : Colors.white,
         borderRadius: BorderRadius.circular(999), // Pill shape
-        border: Border.all(color: theme.isDark ? theme.borderCard : theme.borderCard),
+        border: Border.all(color: theme.isDark ? const Color(0xFF242A33) : theme.borderCard),
       ),
       padding: EdgeInsets.symmetric(horizontal: compact ? 4 : 6, vertical: compact ? 2 : 4),
       child: Row(
@@ -77,22 +77,22 @@ class _StepperButton extends ConsumerWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(100),
-        child: Container(
-          width: compact ? 34 : 40,
-          height: compact ? 34 : 40,
-          decoration: BoxDecoration(
-            color: enabled ? (theme.isDark ? theme.surfaceCard : Colors.white) : Colors.transparent,
-            shape: BoxShape.circle,
-            boxShadow: enabled ? [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: theme.isDark ? 0.4 : 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 5),
-              )
-            ] : null,
-          ),
-          child: Icon(
-            icon,
+          child: Container(
+            width: compact ? 34 : 40,
+            height: compact ? 34 : 40,
+            decoration: BoxDecoration(
+              color: enabled ? (theme.isDark ? theme.surfaceCard : Colors.white) : Colors.transparent,
+              shape: BoxShape.circle,
+              boxShadow: enabled ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: theme.isDark ? 0.4 : 0.06),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                )
+              ] : null,
+            ),
+            child: Icon(
+              icon,
             size: 20,
             color: enabled ? (theme.isDark ? Colors.white : theme.textMain) : theme.textMuted.withValues(alpha: 0.4),
           ),

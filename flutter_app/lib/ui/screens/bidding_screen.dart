@@ -53,7 +53,7 @@ class BiddingScreen extends ConsumerWidget {
             ),
           ),
             
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Text('ENTER BIDS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: theme.textMuted, letterSpacing: 1.4)),
           const SizedBox(height: 10),
           
@@ -71,19 +71,13 @@ class BiddingScreen extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        PlayerAvatar(name: p.name, solid: isDealer),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(p.name, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: theme.textMain)),
-                            Text(
-                              positions[idx % positions.length],
-                              style: TextStyle(fontSize: 12, color: theme.textMuted, fontWeight: FontWeight.w600),
-                            ),
-                          ],
+                        Text(p.name, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: theme.textMain)),
+                        Text(
+                          positions[idx % positions.length],
+                          style: TextStyle(fontSize: 12, color: theme.textMuted, fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
