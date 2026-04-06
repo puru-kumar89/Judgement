@@ -24,3 +24,7 @@ flutter_app/build/
 # Misc
 .env
 
+
+# System
+.config/
+.pub-cache/

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'theme/app_theme.dart';
 import 'ui/screens/home_screen.dart';
 
 void main() {
@@ -12,11 +13,9 @@ class KaatApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Kaat Client',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      title: 'Kaat Score Tracker',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.theme,
       home: const HomeScreen(),
     );
   }
