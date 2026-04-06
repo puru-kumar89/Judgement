@@ -73,8 +73,6 @@ class ResultsScreen extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        PlayerAvatar(name: p.name, solid: false),
-                        const SizedBox(width: 12),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
