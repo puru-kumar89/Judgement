@@ -32,7 +32,10 @@ class BiddingScreen extends ConsumerWidget {
           SummaryCard(
             title: 'BIDDING',
             heroValue: 'Rnd ${state.currentRoundIdx + 1}',
-            badgeWidget: SummaryCard.buildTrumpBadge(currentRound.trump),
+            badgeWidget: Transform.scale(
+              scale: 1.15,
+              child: SummaryCard.buildTrumpBadge(currentRound.trump),
+            ),
             background: LinearGradient(
               colors: [
                 const Color(0xFF2A2C33),

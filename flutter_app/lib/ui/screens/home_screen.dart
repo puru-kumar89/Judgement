@@ -90,17 +90,7 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ),
-      bottomNavigationBar: phase == GamePhase.setup
-          ? null
-          : BottomNav(
-              active: switch (phase) {
-                GamePhase.bidding => NavDestination.history,
-                GamePhase.results => NavDestination.history,
-                GamePhase.leaderboard => NavDestination.score,
-                GamePhase.finished => NavDestination.score,
-                GamePhase.setup => NavDestination.rules,
-              },
-            ),
+      bottomNavigationBar: null,
     );
   }
 }
