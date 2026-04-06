@@ -32,7 +32,7 @@ class StepperInput extends ConsumerWidget {
             : (theme.isDark ? const Color(0xFF12151C) : const Color(0xFFF5F6F8)),
         borderRadius: BorderRadius.circular(999), // Pill shape
         border: Border.all(
-          color: light ? const Color(0xFFE7E1E1) : (theme.isDark ? const Color(0xFF242A33) : const Color(0xFFE4E6EC)),
+          color: light ? Colors.transparent : (theme.isDark ? Colors.transparent : const Color(0xFFE4E6EC)),
         ),
         boxShadow: light
             ? [
