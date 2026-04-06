@@ -88,6 +88,7 @@ class ResultsScreen extends ConsumerWidget {
                       value: currentRound.actuals[p.id] ?? 0,
                       max: currentRound.cards,
                       compact: true,
+                      lightStyle: true,
                       onChanged: (val) => notifier.setActual(p.id, val),
                     ),
                   ],

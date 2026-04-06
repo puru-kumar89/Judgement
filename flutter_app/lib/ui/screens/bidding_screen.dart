@@ -90,6 +90,7 @@ class BiddingScreen extends ConsumerWidget {
                       value: currentRound.bids[p.id] ?? 0,
                       max: currentRound.cards,
                       compact: true,
+                      lightStyle: true,
                       onChanged: (val) => notifier.setBid(p.id, val),
                     ),
                   ],
