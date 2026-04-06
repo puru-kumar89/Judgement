@@ -144,14 +144,13 @@ class LeaderboardScreen extends ConsumerWidget {
               label: 'Next Round',
               onPressed: () => notifier.nextRound(),
             ),
-            if (state.roundStyle == 'constant')
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: TextButton(
-                  onPressed: () => notifier.forceEndGame(),
-                  child: Text('End Game Early', style: TextStyle(color: theme.danger, fontWeight: FontWeight.bold)),
-                ),
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: TextButton(
+                onPressed: () => notifier.forceEndGame(),
+                child: Text('End Game Early', style: TextStyle(color: theme.danger, fontWeight: FontWeight.bold)),
               ),
+            ),
           ] else ...[
             PrimaryButton(
               label: 'New Game',
