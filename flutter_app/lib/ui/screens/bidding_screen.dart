@@ -6,12 +6,36 @@ import '../widgets/stepper_input.dart';
 import '../../theme/theme_provider.dart';
 import '../widgets/player_avatar.dart';
 import '../widgets/primary_button.dart';
+import '../widgets/responsive.dart';
 
-class BiddingScreen extends ConsumerWidget {
+class BiddingScreen extends ConsumerStatefulWidget {
   const BiddingScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BiddingScreen> createState() => _BiddingScreenState();
+}
+
+class _BiddingScreenState extends ConsumerState<BiddingScreen> {
+  final _scroll = ScrollController();
+  double _shrink = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(() {
+      final next = (_scroll.offset / 80).clamp(0, 1).toDouble();
+      if (next != _shrink) setState(() => _shrink = next);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(gameProvider);
     final notifier = ref.read(gameProvider.notifier);
     final currentRound = state.rounds[state.currentRoundIdx];
@@ -24,39 +48,46 @@ class BiddingScreen extends ConsumerWidget {
     }
     bool isHook = totalBids == currentRound.cards;
 
+    final tileScale = 1 - (_shrink * 0.18);
+    final tilePadding = EdgeInsets.only(bottom: 16 - (_shrink * 8));
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      controller: _scroll,
+      padding: EdgeInsets.symmetric(horizontal: hPad(context), vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SummaryCard(
-            title: 'BIDDING',
-            heroValue: 'Rnd ${state.currentRoundIdx + 1}',
-            badgeWidget: Transform.scale(
-              scale: 1.15,
-              child: SummaryCard.buildTrumpBadge(currentRound.trump),
-            ),
-            background: LinearGradient(
-              colors: [
-                const Color(0xFF2A2C33),
-                const Color(0xFF1D1F26),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            bottomContent: Row(
-              children: [
-                Icon(Icons.style, color: Colors.white54, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  '${currentRound.cards} CARDS DEALT',
-                  style: const TextStyle(color: Colors.white54, fontWeight: FontWeight.bold, letterSpacing: 1),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOut,
+            padding: tilePadding,
+            child: Transform.scale(
+              scale: tileScale,
+              alignment: Alignment.topCenter,
+              child: SummaryCard(
+                title: 'BIDDING',
+                heroValue: 'Rnd ${state.currentRoundIdx + 1}',
+                badgeWidget: SummaryCard.buildTrumpBadge(currentRound.trump),
+                background: const LinearGradient(
+                  colors: [Color(0xFF1d222c), Color(0xFF13161d)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
+                bottomContent: Row(
+                  children: [
+                    Icon(Icons.style, color: Colors.white70, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${currentRound.cards} CARDS DEALT',
+                      style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, letterSpacing: 1),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-            
-          const SizedBox(height: 24),
+
+          const SizedBox(height: 12),
           Text('ENTER BIDS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: theme.textMuted, letterSpacing: 1.4)),
           const SizedBox(height: 10),
           

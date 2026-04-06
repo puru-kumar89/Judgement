@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'game_state.dart';
 import '../models/player.dart';
 import '../models/round.dart';
@@ -11,13 +12,82 @@ final gameProvider = StateNotifierProvider<GameNotifier, GameState>((ref) {
 class GameNotifier extends StateNotifier<GameState> {
   GameNotifier() : super(GameState(
     players: [
-      Player(id: '1', name: 'Alice'),
-      Player(id: '2', name: 'Bob'),
-      Player(id: '3', name: 'Charlie'),
+      Player(id: '1', name: ''),
+      Player(id: '2', name: ''),
+      Player(id: '3', name: ''),
     ]
   ));
 
   final List<String> _suits = ['♠️', '♥️', '♦️', '♣️'];
+  static const _prefsPrefix = 'kaat_settings_';
+  bool _prefsLoaded = false;
+  Future<void> _persistPlayers(List<Player> players) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('${_prefsPrefix}players', players.map((p) => p.name).toList());
+  }
+
+  Future<void> _loadPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedNames = prefs.getStringList('${_prefsPrefix}players') ?? [];
+
+    List<Player> playersFromPrefs = storedNames.asMap().entries.map((e) {
+      return Player(id: (e.key + 1).toString(), name: e.value);
+    }).toList();
+
+    // Ensure at least 3 empty slots
+    while (playersFromPrefs.length < 3) {
+      playersFromPrefs.add(Player(id: (playersFromPrefs.length + 1).toString(), name: ''));
+    }
+
+    state = state.copyWith(
+      players: playersFromPrefs.isNotEmpty ? playersFromPrefs : state.players,
+      startingCards: prefs.getInt('${_prefsPrefix}startingCards') ?? state.startingCards,
+      roundStyle: prefs.getString('${_prefsPrefix}roundStyle') ?? state.roundStyle,
+      lenientOvertrick: prefs.getBool('${_prefsPrefix}lenientOvertrick') ?? state.lenientOvertrick,
+      successMultiplier: prefs.getInt('${_prefsPrefix}successMultiplier') ?? state.successMultiplier,
+      penaltyMultiplier: prefs.getInt('${_prefsPrefix}penaltyMultiplier') ?? state.penaltyMultiplier,
+      overtrickBonus: prefs.getInt('${_prefsPrefix}overtrickBonus') ?? state.overtrickBonus,
+      includeNoTrump: prefs.getBool('${_prefsPrefix}includeNoTrump') ?? state.includeNoTrump,
+      prefsLoaded: true,
+    );
+    _prefsLoaded = true;
+  }
+
+  Future<void> _persistPrefs(GameState next) async {
+    final prefs = await SharedPreferences.getInstance();
+    await _persistPlayers(next.players);
+    await prefs.setInt('${_prefsPrefix}startingCards', next.startingCards);
+    await prefs.setString('${_prefsPrefix}roundStyle', next.roundStyle);
+    await prefs.setBool('${_prefsPrefix}lenientOvertrick', next.lenientOvertrick);
+    await prefs.setInt('${_prefsPrefix}successMultiplier', next.successMultiplier);
+    await prefs.setInt('${_prefsPrefix}penaltyMultiplier', next.penaltyMultiplier);
+    await prefs.setInt('${_prefsPrefix}overtrickBonus', next.overtrickBonus);
+    await prefs.setBool('${_prefsPrefix}includeNoTrump', next.includeNoTrump);
+  }
+
+  /// Load saved settings once when the notifier is created.
+  void init() {
+    _loadPrefs();
+  }
+
+  Future<void> saveCurrentSettings() async {
+    await _persistPrefs(state);
+  }
+
+  Future<void> resetSettings() async {
+    final reset = GameState();
+    state = state.copyWith(
+      startingCards: reset.startingCards,
+      roundStyle: reset.roundStyle,
+      lenientOvertrick: reset.lenientOvertrick,
+      successMultiplier: reset.successMultiplier,
+      penaltyMultiplier: reset.penaltyMultiplier,
+      overtrickBonus: reset.overtrickBonus,
+      includeNoTrump: reset.includeNoTrump,
+      prefsLoaded: true,
+    );
+    await _persistPrefs(state);
+  }
 
   void updateSettings({
     int? startingCards,
@@ -28,7 +98,7 @@ class GameNotifier extends StateNotifier<GameState> {
     int? overtrickBonus,
     bool? includeNoTrump,
   }) {
-    state = state.copyWith(
+    final next = state.copyWith(
       startingCards: startingCards,
       roundStyle: roundStyle,
       lenientOvertrick: lenientOvertrick,
@@ -37,18 +107,22 @@ class GameNotifier extends StateNotifier<GameState> {
       overtrickBonus: overtrickBonus,
       includeNoTrump: includeNoTrump,
     );
+    state = next;
+    _persistPrefs(next);
   }
 
   void addPlayer() {
     final newList = List<Player>.from(state.players);
-    newList.add(Player(id: DateTime.now().millisecondsSinceEpoch.toString(), name: 'Player ${newList.length + 1}'));
+    newList.add(Player(id: DateTime.now().millisecondsSinceEpoch.toString(), name: ''));
     state = state.copyWith(players: newList);
+    _persistPlayers(state.players);
   }
 
   void removePlayer(String id) {
     if (state.players.length <= 3) return;
     final newList = state.players.where((p) => p.id != id).toList();
     state = state.copyWith(players: newList);
+    _persistPlayers(state.players);
   }
 
   void updatePlayerName(String id, String newName) {
@@ -57,19 +131,30 @@ class GameNotifier extends StateNotifier<GameState> {
       return p;
     }).toList();
     state = state.copyWith(players: newList);
+    _persistPlayers(state.players);
+  }
+
+  void reorderPlayers(int oldIndex, int newIndex) {
+    final newList = List<Player>.from(state.players);
+    if (newIndex > oldIndex) newIndex -= 1;
+    final item = newList.removeAt(oldIndex);
+    newList.insert(newIndex, item);
+    state = state.copyWith(players: newList);
+    _persistPlayers(state.players);
   }
 
   void setDealer(String playerId) {
     if (state.players.isEmpty) return;
-    if (state.players.last.id == playerId) return;
-    
-    // Rotate the table order relative to the selected dealer
+    if (state.players.first.id == playerId) return;
+
+    // Rotate so selected player is at the front (dealer)
     var currentPlayers = List<Player>.from(state.players);
-    while (currentPlayers.last.id != playerId) {
+    while (currentPlayers.first.id != playerId) {
       var first = currentPlayers.removeAt(0);
       currentPlayers.add(first);
     }
     state = state.copyWith(players: currentPlayers);
+    _persistPlayers(state.players);
   }
 
   void startGame() {

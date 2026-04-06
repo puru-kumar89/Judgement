@@ -6,9 +6,9 @@ final themeProvider = StateNotifierProvider<ThemeNotifier, AppThemeData>((ref) {
 });
 
 class ThemeNotifier extends StateNotifier<AppThemeData> {
-  bool _isDark = false;
+  bool _isDark = true;
 
-  ThemeNotifier() : super(AppThemeData.light());
+  ThemeNotifier() : super(AppThemeData.dark());
 
   bool get isDark => _isDark;
 

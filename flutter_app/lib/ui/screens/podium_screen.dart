@@ -6,8 +6,9 @@ import '../../state/game_provider.dart';
 import '../../theme/theme_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../models/player.dart';
-import '../widgets/player_avatar.dart';
 import '../widgets/primary_button.dart';
+import '../../models/round.dart';
+import '../widgets/responsive.dart';
 
 class PodiumScreen extends ConsumerStatefulWidget {
   const PodiumScreen({super.key});
@@ -44,21 +45,23 @@ class _PodiumScreenState extends ConsumerState<PodiumScreen> {
     final Player first = sortedPlayers.isNotEmpty ? sortedPlayers[0] : Player(id: '', name: '?');
     final Player? second = sortedPlayers.length > 1 ? sortedPlayers[1] : null;
     final Player? third = sortedPlayers.length > 2 ? sortedPlayers[2] : null;
+    final rest = sortedPlayers.length > 3 ? sortedPlayers.sublist(3) : <Player>[];
 
     return Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: hPad(context), vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'FINAL SCORES',
                 style: TextStyle(
                   fontFamily: 'Space Grotesk',
-                  fontSize: 34,
+                  fontSize: titleSize(context),
                   fontWeight: FontWeight.w900,
                   letterSpacing: -1.2,
+                  color: theme.textMain,
                 ),
               ),
               const SizedBox(height: 6),
@@ -66,7 +69,7 @@ class _PodiumScreenState extends ConsumerState<PodiumScreen> {
                 'Game Over!',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: theme.textMuted),
               ),
-              const Spacer(),
+              const SizedBox(height: 24),
               
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -98,20 +101,59 @@ class _PodiumScreenState extends ConsumerState<PodiumScreen> {
                     ),
                 ],
               ),
+
+              if (rest.isNotEmpty) ...[
+                const SizedBox(height: 28),
+                Text('Other ranks', style: TextStyle(fontWeight: FontWeight.w800, color: theme.textMain)),
+                const SizedBox(height: 10),
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.surfaceCard,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: theme.borderCard),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: rest.length,
+                    separatorBuilder: (_, __) => Divider(height: 1, color: theme.borderCard),
+                    itemBuilder: (_, idx) {
+                      final player = rest[idx];
+                      final rank = idx + 4;
+                      return ListTile(
+                        dense: true,
+                        leading: Text('#$rank', style: TextStyle(fontWeight: FontWeight.w800, color: theme.textMuted)),
+                        title: Text(player.name, style: TextStyle(fontWeight: FontWeight.w800, color: theme.textMain)),
+                        trailing: Text(
+                          '${player.totalScore}',
+                          style: TextStyle(
+                            fontFamily: 'Space Grotesk',
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: theme.textMain,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
               
-              const SizedBox(height: 36),
+              const SizedBox(height: 28),
               PrimaryButton(
                 label: 'New Game',
                 onPressed: () => notifier.restartGame(),
               ),
               const SizedBox(height: 12),
               Center(
-                child: Text(
-                  'View Match Analysis',
-                  style: TextStyle(
-                    color: theme.textMuted,
-                    fontWeight: FontWeight.w700,
-                    decoration: TextDecoration.underline,
+                child: TextButton(
+                  onPressed: () => _showAnalysis(context, sortedPlayers, state.rounds, theme),
+                  child: Text(
+                    'View Match Analysis',
+                    style: TextStyle(
+                      color: theme.textMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -119,7 +161,7 @@ class _PodiumScreenState extends ConsumerState<PodiumScreen> {
             ],
           ),
         ),
-        
+
         Align(
           alignment: Alignment.topCenter,
           child: ConfettiWidget(
@@ -167,8 +209,17 @@ class _PodiumCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          PlayerAvatar(name: player.name, solid: highlight, size: highlight ? 60 : 52),
-          const SizedBox(height: 8),
+          Text(
+            player.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: highlight ? 18 : 16,
+              fontWeight: FontWeight.w900,
+              color: theme.textMain,
+            ),
+          ),
+          const SizedBox(height: 10),
           Container(
             height: height,
             margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -203,18 +254,7 @@ class _PodiumCard extends StatelessWidget {
                     color: borderColor,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  player.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: highlight ? 16 : 15,
-                    fontWeight: FontWeight.w800,
-                    color: theme.textMain,
-                  ),
-                ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 10),
                 Text(
                   '${player.totalScore}',
                   style: TextStyle(
@@ -231,4 +271,91 @@ class _PodiumCard extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showAnalysis(BuildContext context, List<Player> players, List<GameRound> rounds, AppThemeData theme) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: theme.surfaceCard,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (ctx) {
+      final stats = players.map((p) {
+        int successes = 0;
+        int totalTricks = 0;
+        int roundsPlayed = 0;
+
+        for (final r in rounds) {
+          if (r.actuals.containsKey(p.id)) {
+            totalTricks += r.actuals[p.id] ?? 0;
+            roundsPlayed++;
+          }
+          if (r.actuals[p.id] != null && r.bids[p.id] != null && r.actuals[p.id] == r.bids[p.id]) {
+            successes++;
+          }
+        }
+
+        final successRate = roundsPlayed == 0 ? 0 : ((successes / roundsPlayed) * 100).round();
+
+        return {
+          'player': p,
+          'successes': successes,
+          'rounds': roundsPlayed,
+          'tricks': totalTricks,
+          'successRate': successRate,
+        };
+      }).toList();
+
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 4,
+                width: 60,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: theme.borderCard,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              Text('Match Analysis', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: theme.textMain)),
+              const SizedBox(height: 12),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: stats.length,
+                separatorBuilder: (_, __) => Divider(height: 1, color: theme.borderCard),
+                itemBuilder: (_, idx) {
+                  final data = stats[idx];
+                  final player = data['player'] as Player;
+                  return ListTile(
+                    dense: true,
+                    title: Text(player.name, style: TextStyle(fontWeight: FontWeight.w800, color: theme.textMain)),
+                    subtitle: Text(
+                      '${data['successes']} accurate bids • ${data['tricks']} tricks • ${data['successRate']}% accuracy',
+                      style: TextStyle(color: theme.textMuted),
+                    ),
+                    trailing: Text(
+                      '${player.totalScore}',
+                      style: TextStyle(
+                        fontFamily: 'Space Grotesk',
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        color: theme.textMain,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }

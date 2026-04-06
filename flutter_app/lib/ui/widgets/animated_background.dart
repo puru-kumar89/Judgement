@@ -15,8 +15,8 @@ class AnimatedBackground extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF1B1E26),
-              Color(0xFF161920),
+              Color(0xFF13151B),
+              Color(0xFF0F1014),
             ],
           )
         : const LinearGradient(
@@ -33,9 +33,9 @@ class AnimatedBackground extends ConsumerWidget {
       child: Stack(
         children: [
           if (theme.isDark) ...[
-            Positioned(top: -140, left: -140, child: _orb(theme.accent.withValues(alpha: 0.22), 420)),
-            Positioned(bottom: -120, right: -160, child: _orb(const Color(0xFF0F3A3A).withValues(alpha: 0.25), 520)),
-            Positioned(top: 160, right: -60, child: _orb(Colors.black.withValues(alpha: 0.18), 260)),
+            Positioned(top: -140, left: -140, child: _orb(theme.accent.withValues(alpha: 0.20), 420)),
+            Positioned(bottom: -120, right: -160, child: _orb(const Color(0xFF0C0D11).withValues(alpha: 0.30), 520)),
+            Positioned(top: 160, right: -60, child: _orb(Colors.black.withValues(alpha: 0.20), 260)),
           ] else ...[
             Positioned(top: -120, left: -120, child: _orb(theme.accent.withValues(alpha: 0.18), 360)),
             Positioned(bottom: -140, right: -140, child: _orb((theme.isDark ? Colors.white : theme.accent2).withValues(alpha: 0.12), 460)),

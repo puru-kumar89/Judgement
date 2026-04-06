@@ -19,6 +19,7 @@ class GameState {
   final int penaltyMultiplier;
   final int overtrickBonus;
   final bool includeNoTrump;
+  final bool prefsLoaded;
   
   GameState({
     this.phase = GamePhase.setup,
@@ -32,6 +33,7 @@ class GameState {
     this.penaltyMultiplier = 10,
     this.overtrickBonus = 1,
     this.includeNoTrump = false,
+    this.prefsLoaded = false,
   });
 
   GameState copyWith({
@@ -46,6 +48,7 @@ class GameState {
     int? penaltyMultiplier,
     int? overtrickBonus,
     bool? includeNoTrump,
+    bool? prefsLoaded,
   }) {
     return GameState(
       phase: phase ?? this.phase,
@@ -59,6 +62,7 @@ class GameState {
       penaltyMultiplier: penaltyMultiplier ?? this.penaltyMultiplier,
       overtrickBonus: overtrickBonus ?? this.overtrickBonus,
       includeNoTrump: includeNoTrump ?? this.includeNoTrump,
+      prefsLoaded: prefsLoaded ?? this.prefsLoaded,
     );
   }
 }

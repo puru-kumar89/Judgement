@@ -30,13 +30,28 @@ class SummaryCard extends ConsumerWidget {
     else if (trump == '♠️' || trump == '♣️') trumpColor = const Color(0xFFE2E8F0);
     else if (trump == 'NT') trumpColor = const Color(0xFFFFD700);
 
-    return RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(text: trump, style: TextStyle(color: trumpColor, fontSize: 22)),
-          const TextSpan(text: ' Trump', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-        ]
-      )
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          trump,
+          style: TextStyle(
+            color: trumpColor,
+            fontSize: 56,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          'TRUMP',
+          style: TextStyle(
+            color: Colors.white70,
+            fontWeight: FontWeight.w600,
+            fontSize: 10,
+            letterSpacing: 1.0,
+          ),
+        ),
+      ],
     );
   }
 
@@ -67,45 +82,38 @@ class SummaryCard extends ConsumerWidget {
           ),
         ],
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (!denseTop) ...[
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2,
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 6),
-              ],
-              Text(
-                heroValue,
-                style: Theme.of(context).textTheme.displayMedium,
+          if (!denseTop) ...[
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 2,
+                color: Colors.white70,
               ),
-              if (bottomContent != null) ...[
-                const SizedBox(height: 16),
-                bottomContent!,
-              ]
+            ),
+            const SizedBox(height: 6),
+          ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  heroValue,
+                  style: Theme.of(context).textTheme.displayMedium,
+                ),
+              ),
+              badgeWidget,
             ],
           ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(100),
-              ),
-              child: badgeWidget,
-            ),
-          )
+          if (bottomContent != null) ...[
+            const SizedBox(height: 16),
+            bottomContent!,
+          ]
         ],
       ),
     );

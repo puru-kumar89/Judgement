@@ -48,10 +48,10 @@ class AppThemeData {
   factory AppThemeData.dark() {
     return const AppThemeData(
       isDark: true,
-      background: Color(0xFF191C23),
-      surfaceCard: Color(0xFF1F232B),
-      borderCard: Color(0x33FFFFFF),
-      invertedCard: Color(0xFF232731),
+      background: Color(0xFF131416),
+      surfaceCard: Color(0xFF1B1C1F),
+      borderCard: Color(0x26FFFFFF),
+      invertedCard: Color(0xFF26272B),
       accent: Color(0xFFD00231),
       accent2: Color(0xFFE3123C),
       overlay: Color(0x1AFFFFFF),

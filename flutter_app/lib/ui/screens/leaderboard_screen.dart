@@ -4,6 +4,7 @@ import '../../state/game_provider.dart';
 import '../../state/game_state.dart';
 import '../../theme/theme_provider.dart';
 import '../widgets/primary_button.dart';
+import '../widgets/responsive.dart';
 
 class LeaderboardScreen extends ConsumerWidget {
   const LeaderboardScreen({super.key});
@@ -18,17 +19,18 @@ class LeaderboardScreen extends ConsumerWidget {
     final isFinished = state.phase == GamePhase.finished;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: hPad(context), vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             isFinished ? 'FINAL SCORES' : 'LEADERBOARD',
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Space Grotesk',
-              fontSize: 34,
+              fontSize: titleSize(context),
               fontWeight: FontWeight.w900,
               letterSpacing: -1.1,
+              color: theme.textMain,
             ),
           ),
           const SizedBox(height: 6),
@@ -100,7 +102,14 @@ class LeaderboardScreen extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(p.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                                  Text(
+                                    p.name,
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                      color: theme.textMain,
+                                    ),
+                                  ),
                                   const SizedBox(height: 4),
                                   Text(
                                     '$sign${p.roundChange} this round',
@@ -115,7 +124,7 @@ class LeaderboardScreen extends ConsumerWidget {
                                 fontFamily: 'Space Grotesk',
                                 fontSize: 36,
                                 fontWeight: FontWeight.w800,
-                                color: theme.invertedCard,
+                                color: theme.textMain,
                                 height: 1.0,
                               ),
                             ),
