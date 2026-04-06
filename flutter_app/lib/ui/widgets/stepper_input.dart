@@ -24,9 +24,9 @@ class StepperInput extends ConsumerWidget {
     
     return Container(
       decoration: BoxDecoration(
-        color: theme.isDark ? const Color(0xFF12151C) : Colors.white,
+        color: theme.isDark ? const Color(0xFF12151C) : const Color(0xFFF5F6F8),
         borderRadius: BorderRadius.circular(999), // Pill shape
-        border: Border.all(color: theme.isDark ? const Color(0xFF242A33) : theme.borderCard),
+        border: Border.all(color: theme.isDark ? const Color(0xFF242A33) : const Color(0xFFE4E6EC)),
       ),
       padding: EdgeInsets.symmetric(horizontal: compact ? 4 : 6, vertical: compact ? 2 : 4),
       child: Row(

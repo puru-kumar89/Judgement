@@ -34,8 +34,8 @@ class ResultsScreen extends ConsumerWidget {
             badgeWidget: SummaryCard.buildTrumpBadge(currentRound.trump),
             background: LinearGradient(
               colors: [
-                theme.invertedCard,
-                theme.invertedCard.withValues(alpha: 0.9),
+                const Color(0xFF2A2C33),
+                const Color(0xFF1D1F26),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -62,7 +62,9 @@ class ResultsScreen extends ConsumerWidget {
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: PremiumRowCard(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                backgroundColor: theme.isDark ? theme.surfaceCard : Colors.white,
+                borderColor: theme.borderCard,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

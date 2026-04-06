@@ -11,6 +11,7 @@ class SummaryCard extends ConsumerWidget {
   final Widget? bottomContent;
   final Gradient? background;
   final EdgeInsetsGeometry padding;
+  final bool denseTop;
 
   const SummaryCard({
     super.key,
@@ -20,6 +21,7 @@ class SummaryCard extends ConsumerWidget {
     this.bottomContent,
     this.background,
     this.padding = const EdgeInsets.all(24),
+    this.denseTop = false,
   });
 
   static Widget buildTrumpBadge(String trump) {
@@ -70,16 +72,18 @@ class SummaryCard extends ConsumerWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 2,
-                  color: Colors.white54,
+              if (!denseTop) ...[
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2,
+                    color: Colors.white70,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
+                const SizedBox(height: 6),
+              ],
               Text(
                 heroValue,
                 style: Theme.of(context).textTheme.displayMedium,
@@ -113,12 +117,16 @@ class PremiumRowCard extends ConsumerWidget {
   final Widget child;
   final bool isActive;
   final EdgeInsetsGeometry padding;
+  final Color? backgroundColor;
+  final Color? borderColor;
 
   const PremiumRowCard({
     super.key,
     required this.child,
     this.isActive = false,
     this.padding = const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+    this.backgroundColor,
+    this.borderColor,
   });
 
   @override
@@ -130,10 +138,10 @@ class PremiumRowCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 36,
-            spreadRadius: -12,
-            offset: const Offset(0, 12),
+            color: Colors.black.withValues(alpha: theme.isDark ? 0.08 : 0.06),
+            blurRadius: theme.isDark ? 24 : 30,
+            spreadRadius: -10,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -144,10 +152,10 @@ class PremiumRowCard extends ConsumerWidget {
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
-              color: theme.surfaceCard.withValues(alpha: theme.isDark ? 0.8 : 0.92),
+              color: backgroundColor ?? theme.surfaceCard.withValues(alpha: theme.isDark ? 0.8 : 0.96),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: isActive ? theme.accent.withValues(alpha: 0.45) : theme.borderCard,
+                color: borderColor ?? (isActive ? theme.accent.withValues(alpha: 0.45) : theme.borderCard),
                 width: isActive ? 1.4 : 1,
               ),
             ),

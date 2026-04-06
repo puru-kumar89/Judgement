@@ -13,7 +13,7 @@ class BottomNav extends ConsumerWidget {
     final theme = ref.watch(themeProvider);
     return Container(
       decoration: BoxDecoration(
-        color: theme.surfaceCard.withValues(alpha: theme.isDark ? 0.65 : 0.92),
+        color: theme.isDark ? theme.surfaceCard.withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.95),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(28),
           topRight: Radius.circular(28),
@@ -44,6 +44,7 @@ class BottomNav extends ConsumerWidget {
             selected: selected,
             accent: theme.accent,
             textColor: theme.textMuted,
+            filled: dest == active,
           );
         }).toList(),
       ),
@@ -57,6 +58,7 @@ class _NavItem extends StatelessWidget {
   final bool selected;
   final Color accent;
   final Color textColor;
+  final bool filled;
 
   const _NavItem({
     required this.icon,
@@ -64,6 +66,7 @@ class _NavItem extends StatelessWidget {
     required this.selected,
     required this.accent,
     required this.textColor,
+    required this.filled,
   });
 
   @override
@@ -75,9 +78,9 @@ class _NavItem extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: selected ? accent : Colors.transparent,
+            color: filled ? accent : Colors.transparent,
             shape: BoxShape.circle,
-            boxShadow: selected
+            boxShadow: filled
                 ? [
                     BoxShadow(
                       color: accent.withValues(alpha: 0.28),
@@ -86,11 +89,11 @@ class _NavItem extends StatelessWidget {
                     )
                   ]
                 : null,
-            border: selected ? null : Border.all(color: textColor.withValues(alpha: 0.25)),
+            border: filled ? null : Border.all(color: textColor.withValues(alpha: 0.25)),
           ),
           child: Icon(
             icon,
-            color: selected ? Colors.white : textColor,
+            color: filled ? Colors.white : textColor,
           ),
         ),
         const SizedBox(height: 6),
@@ -100,7 +103,7 @@ class _NavItem extends StatelessWidget {
             fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
-            color: selected ? accent : textColor,
+            color: filled ? accent : textColor,
           ),
         )
       ],

@@ -23,8 +23,8 @@ class AnimatedBackground extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFF8FBFF),
-              Color(0xFFF2F6FB),
+              Color(0xFFF8FAFD),
+              Color(0xFFF0F5FA),
             ],
           );
 

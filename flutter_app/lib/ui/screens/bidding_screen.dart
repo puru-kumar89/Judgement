@@ -35,8 +35,8 @@ class BiddingScreen extends ConsumerWidget {
             badgeWidget: SummaryCard.buildTrumpBadge(currentRound.trump),
             background: LinearGradient(
               colors: [
-                const Color(0xFF151820),
-                const Color(0xFF0F1117),
+                const Color(0xFF2A2C33),
+                const Color(0xFF1D1F26),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -67,7 +67,9 @@ class BiddingScreen extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 10),
               child: PremiumRowCard(
                 isActive: isDealer,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                backgroundColor: theme.isDark ? theme.surfaceCard : Colors.white,
+                borderColor: isDealer ? theme.accent.withValues(alpha: 0.4) : theme.borderCard,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
