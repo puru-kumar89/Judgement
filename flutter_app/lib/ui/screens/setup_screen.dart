@@ -68,16 +68,24 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                       ],
                     ),
                     if (state.players.length < 10)
-                      ElevatedButton.icon(
-                        onPressed: notifier.addPlayer,
-                        icon: const Icon(Icons.add, size: 16),
-                        label: const Text('ADD'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.surfaceCard,
-                          foregroundColor: theme.accent,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18), side: BorderSide(color: theme.borderCard)),
+                      SizedBox(
+                        height: 40,
+                        child: ElevatedButton.icon(
+                          onPressed: notifier.addPlayer,
+                          icon: const Icon(Icons.add, size: 16),
+                          label: const Text('ADD'),
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            backgroundColor: theme.surfaceCard,
+                            foregroundColor: theme.accent,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                              side: BorderSide(color: theme.borderCard),
+                            ),
+                          ),
                         ),
                       ),
                   ],
