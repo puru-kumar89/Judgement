@@ -102,13 +102,11 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       child: Row(
                         children: [
-                          PlayerAvatar(name: p.name, solid: isDealer),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                TextFormField(
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextFormField(
                                   initialValue: p.name,
                                   onChanged: (val) => notifier.updatePlayerName(p.id, val),
                                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: theme.textMain),

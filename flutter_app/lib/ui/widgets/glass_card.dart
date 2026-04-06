@@ -52,7 +52,7 @@ class SummaryCard extends ConsumerWidget {
             LinearGradient(
               colors: [
                 theme.invertedCard,
-                theme.invertedCard.withValues(alpha: 0.95),
+                theme.invertedCard.withValues(alpha: theme.isDark ? 0.92 : 0.95),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -138,10 +138,10 @@ class PremiumRowCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: theme.isDark ? 0.08 : 0.06),
-            blurRadius: theme.isDark ? 24 : 30,
-            spreadRadius: -10,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: theme.isDark ? 0.06 : 0.06),
+            blurRadius: theme.isDark ? 18 : 24,
+            spreadRadius: -8,
+            offset: const Offset(0, 8),
           ),
         ],
       ),

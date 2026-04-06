@@ -15,8 +15,8 @@ class AnimatedBackground extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF0D0F14),
-              Color(0xFF08090D),
+              Color(0xFF1B1E26),
+              Color(0xFF161920),
             ],
           )
         : const LinearGradient(

@@ -37,10 +37,10 @@ class StepperInput extends ConsumerWidget {
         boxShadow: light
             ? [
                 BoxShadow(
-                  color: const Color(0xFFE0C8C8).withValues(alpha: 0.35),
-                  blurRadius: 30,
+                  color: const Color(0xFFE0C8C8).withValues(alpha: 0.32),
+                  blurRadius: 26,
                   spreadRadius: -6,
-                  offset: const Offset(0, 16),
+                  offset: const Offset(0, 14),
                 )
               ]
             : null,
