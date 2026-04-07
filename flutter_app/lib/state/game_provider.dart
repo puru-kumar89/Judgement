@@ -31,21 +31,23 @@ class GameNotifier extends StateNotifier<GameState> {
   }
 
   /// Persist the full game state so a page refresh restores the active session.
-  Future<void> _persistGameState() async {
+  Future<void> _persistGameState({GameState? snapshot}) async {
     final prefs = await SharedPreferences.getInstance();
-    final s = state;
-
-    // Only persist if there is an active / navigated-home game.
-    if (s.rounds.isEmpty) {
-      await prefs.remove(_activeGameKey);
-      return;
-    }
+    final s = snapshot ?? state;
 
     final json = jsonEncode({
       'phase': s.phase.name,
       'currentRoundIdx': s.currentRoundIdx,
       'roundStep': s.roundStep,
       'trumpIndex': s.trumpIndex,
+      'startingCards': s.startingCards,
+      'roundStyle': s.roundStyle,
+      'lenientOvertrick': s.lenientOvertrick,
+      'successMultiplier': s.successMultiplier,
+      'penaltyMultiplier': s.penaltyMultiplier,
+      'overtrickBonus': s.overtrickBonus,
+      'includeNoTrump': s.includeNoTrump,
+      'prefsLoaded': s.prefsLoaded,
       'players': s.players.map((p) => {
         'id': p.id,
         'name': p.name,
@@ -58,6 +60,7 @@ class GameNotifier extends StateNotifier<GameState> {
         'bids': r.bids,
         'actuals': r.actuals,
       }).toList(),
+      'hasActiveGame': s.rounds.isNotEmpty,
     });
     await prefs.setString(_activeGameKey, json);
   }
@@ -100,7 +103,6 @@ class GameNotifier extends StateNotifier<GameState> {
           orElse: () => GamePhase.bidding,
         );
 
-        // Also reload settings from prefs for the restored session.
         state = state.copyWith(
           phase: restoredPhase,
           players: restoredPlayers,
@@ -108,13 +110,13 @@ class GameNotifier extends StateNotifier<GameState> {
           currentRoundIdx: m['currentRoundIdx'] as int,
           roundStep: m['roundStep'] as int,
           trumpIndex: m['trumpIndex'] as int,
-          startingCards: prefs.getInt('${_prefsPrefix}startingCards') ?? state.startingCards,
-          roundStyle: prefs.getString('${_prefsPrefix}roundStyle') ?? state.roundStyle,
-          lenientOvertrick: prefs.getBool('${_prefsPrefix}lenientOvertrick') ?? state.lenientOvertrick,
-          successMultiplier: prefs.getInt('${_prefsPrefix}successMultiplier') ?? state.successMultiplier,
-          penaltyMultiplier: prefs.getInt('${_prefsPrefix}penaltyMultiplier') ?? state.penaltyMultiplier,
-          overtrickBonus: prefs.getInt('${_prefsPrefix}overtrickBonus') ?? state.overtrickBonus,
-          includeNoTrump: prefs.getBool('${_prefsPrefix}includeNoTrump') ?? state.includeNoTrump,
+          startingCards: (m['startingCards'] ?? state.startingCards) as int,
+          roundStyle: (m['roundStyle'] ?? state.roundStyle) as String,
+          lenientOvertrick: (m['lenientOvertrick'] ?? state.lenientOvertrick) as bool,
+          successMultiplier: (m['successMultiplier'] ?? state.successMultiplier) as int,
+          penaltyMultiplier: (m['penaltyMultiplier'] ?? state.penaltyMultiplier) as int,
+          overtrickBonus: (m['overtrickBonus'] ?? state.overtrickBonus) as int,
+          includeNoTrump: (m['includeNoTrump'] ?? state.includeNoTrump) as bool,
           prefsLoaded: true,
         );
         return;
@@ -165,6 +167,7 @@ class GameNotifier extends StateNotifier<GameState> {
 
   Future<void> saveCurrentSettings() async {
     await _persistPrefs(state);
+    await _persistGameState();
   }
 
   Future<void> resetSettings() async {
@@ -180,6 +183,7 @@ class GameNotifier extends StateNotifier<GameState> {
       prefsLoaded: true,
     );
     await _persistPrefs(state);
+    await _persistGameState();
   }
 
   // ─── Settings ───────────────────────────────────────────────────
@@ -204,6 +208,7 @@ class GameNotifier extends StateNotifier<GameState> {
     );
     state = next;
     _persistPrefs(next);
+    _persistGameState(snapshot: next);
   }
 
   // ─── Player management ──────────────────────────────────────────
@@ -213,6 +218,7 @@ class GameNotifier extends StateNotifier<GameState> {
     final newList = List<Player>.from(state.players);
     newList.add(Player(id: DateTime.now().millisecondsSinceEpoch.toString(), name: ''));
     state = state.copyWith(players: newList);
+    _persistGameState();
     _persistPlayers(state.players);
   }
 
@@ -220,6 +226,7 @@ class GameNotifier extends StateNotifier<GameState> {
     if (state.players.length <= 3) return;
     final newList = state.players.where((p) => p.id != id).toList();
     state = state.copyWith(players: newList);
+    _persistGameState();
     _persistPlayers(state.players);
   }
 
@@ -229,6 +236,7 @@ class GameNotifier extends StateNotifier<GameState> {
       return p;
     }).toList();
     state = state.copyWith(players: newList);
+    _persistGameState();
     _persistPlayers(state.players);
   }
 
@@ -238,6 +246,7 @@ class GameNotifier extends StateNotifier<GameState> {
     final item = newList.removeAt(oldIndex);
     newList.insert(newIndex, item);
     state = state.copyWith(players: newList);
+    _persistGameState();
     _persistPlayers(state.players);
   }
 
@@ -250,6 +259,7 @@ class GameNotifier extends StateNotifier<GameState> {
       currentPlayers.add(first);
     }
     state = state.copyWith(players: currentPlayers);
+    _persistGameState();
     _persistPlayers(state.players);
   }
 
@@ -321,7 +331,24 @@ class GameNotifier extends StateNotifier<GameState> {
   void applyNewRules() {
     if (state.rounds.isEmpty) return; // Nothing to apply to.
     final targetPhase = _inferActivePhase();
-    state = state.copyWith(phase: targetPhase);
+
+    int updatedStep = state.roundStep;
+    if (state.roundStyle == 'constant') {
+      updatedStep = 0;
+    } else if (state.roundStyle == 'countdown' && state.roundStep == 0) {
+      updatedStep = -1;
+    }
+
+    final activeSuits = state.includeNoTrump
+        ? ['♠️', '♥️', '♣️', '♦️', 'NT']
+        : ['♠️', '♥️', '♣️', '♦️'];
+    final adjustedTrumpIndex = state.trumpIndex % activeSuits.length;
+
+    state = state.copyWith(
+      phase: targetPhase,
+      roundStep: updatedStep,
+      trumpIndex: adjustedTrumpIndex,
+    );
     _persistPrefs(state);
     _persistGameState();
   }

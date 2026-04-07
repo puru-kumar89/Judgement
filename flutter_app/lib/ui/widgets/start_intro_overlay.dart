@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../theme/theme_provider.dart';
-import '../../theme/app_theme.dart';
 
-/// Premium-feel startup flourish: 3D spinning suits and cycling names.
-/// Auto-dismisses quickly and can be tapped to skip.
+/// Startup flourish that mimics the stacked, motion-blurred name roll
+/// from the provided reference clip. Very quick, non-blocking, tap-to-skip.
 class StartIntroOverlay extends ConsumerStatefulWidget {
   final VoidCallback onFinished;
 
@@ -19,56 +19,62 @@ class StartIntroOverlay extends ConsumerStatefulWidget {
 
 class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
     with TickerProviderStateMixin {
-  late final AnimationController _spinCtrl;
+  late final AnimationController _scrollCtrl;
   late final AnimationController _fadeCtrl;
-  late final Animation<double> _spinEase;
-  late final Timer _nameTimer;
+  late final AnimationController _suitCtrl;
   bool _finished = false;
-  int _nameIdx = 0;
 
   final List<String> _nameVariants = const [
+    'Kaat Judgement',
     'Court Piece',
-    'Kaat',
-    'Judgement',
     'Rang',
+    'Coat Piece',
+    'Jut Patti',
     'Call Break',
-    'Oh Hell',
     'Hand of Fate',
+  ];
+
+  final List<_Suit> _suits = const [
+    _Suit(icon: '♠', color: Color(0xFF1E2330)),
+    _Suit(icon: '♥', color: Color(0xFFD00231)),
+    _Suit(icon: '♣', color: Color(0xFF0C9A3E)),
+    _Suit(icon: '♦', color: Color(0xFFE3123C)),
   ];
 
   @override
   void initState() {
     super.initState();
-    _spinCtrl = AnimationController(
+
+    _scrollCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 1100),
+    )..forward();
+
+    _suitCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
     )..repeat();
-    _spinEase = CurvedAnimation(parent: _spinCtrl, curve: Curves.easeInOut);
 
     _fadeCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 320),
+      duration: const Duration(milliseconds: 260),
     );
 
-    _nameTimer = Timer.periodic(const Duration(milliseconds: 620), (_) {
-      if (mounted) setState(() => _nameIdx = (_nameIdx + 1) % _nameVariants.length);
-    });
-
-    // Auto finish after ~2.5s
-    Future.delayed(const Duration(milliseconds: 2500), _finish);
+    // Auto finish slightly after scroll completes.
+    Future.delayed(const Duration(milliseconds: 1400), _finish);
   }
 
   void _finish() {
     if (_finished) return;
     _finished = true;
-    _fadeCtrl.forward().whenComplete(() => widget.onFinished());
+    _fadeCtrl.forward().whenComplete(widget.onFinished);
   }
 
   @override
   void dispose() {
-    _spinCtrl.dispose();
+    _scrollCtrl.dispose();
+    _suitCtrl.dispose();
     _fadeCtrl.dispose();
-    _nameTimer.cancel();
     super.dispose();
   }
 
@@ -77,102 +83,77 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
     if (_finished) return const SizedBox.shrink();
     final theme = ref.watch(themeProvider);
 
-    final suits = [
-      _Suit(icon: '♠', color: Colors.black),
-      _Suit(icon: '♥', color: const Color(0xFFD00231)),
-      _Suit(icon: '♦', color: const Color(0xFFE3123C)),
-      _Suit(icon: '♣', color: Colors.black),
-    ];
-
     return Positioned.fill(
       child: FadeTransition(
         opacity: Tween(begin: 1.0, end: 0.0).animate(_fadeCtrl),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: _finish,
-            child: Container(
-            color: const Color(0xFF0B0B0C).withValues(alpha: 0.82),
-              child: Center(
-                child: SizedBox(
-                  width: 260,
-                  height: 260,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AnimatedBuilder(
-                        animation: _spinEase,
-                        builder: (context, _) {
-                          final double turns = _spinEase.value * 2 * pi;
-                          final idx = ((_spinEase.value * suits.length).floor()) % suits.length;
-                          final suit = suits[idx];
-                          final scale = 0.98 + (sin(turns).abs() * 0.04);
-                          return Transform(
-                            alignment: Alignment.center,
-                            transform: Matrix4.identity()
-                              ..setEntry(3, 2, 0.0015)
-                              ..rotateY(turns)
-                              ..scale(scale),
-                            child: Container(
-                              width: 140,
-                              height: 180,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    theme.surfaceCard,
-                                    theme.surfaceCard.withValues(alpha: 0.8)
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: theme.borderCard),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.2),
-                                    blurRadius: 18,
-                                    offset: const Offset(0, 10),
-                                  )
-                                ],
-                              ),
-                              child: Center(
+          child: Container(
+            color: theme.isDark
+                ? Colors.black.withValues(alpha: 0.60)
+                : Colors.white.withValues(alpha: 0.62),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Suits fan in the background for a split-second flip.
+                AnimatedBuilder(
+                  animation: _suitCtrl,
+                  builder: (context, _) {
+                    final t = _suitCtrl.value;
+                    return Transform.rotate(
+                      angle: sin(t * pi * 2) * 0.08,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(_suits.length, (i) {
+                          final delay = i * 0.08;
+                          final localT = ((t - delay) * 1.2).clamp(0.0, 1.0);
+                          final flip = Tween(begin: pi, end: 0.0).transform(localT);
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: Transform(
+                              alignment: Alignment.center,
+                              transform: Matrix4.identity()
+                                ..setEntry(3, 2, 0.0013)
+                                ..rotateY(flip),
+                              child: Opacity(
+                                opacity: localT,
                                 child: Text(
-                                  suit.icon,
-                                  textAlign: TextAlign.center,
+                                  _suits[i].icon,
                                   style: TextStyle(
-                                    fontSize: 52,
+                                    fontSize: 26,
                                     fontWeight: FontWeight.w900,
-                                    letterSpacing: -1,
-                                    color: suit.color,
-                                    fontFamily: 'Roboto',
+                                    color: _suits[i].color,
+                                    letterSpacing: -0.5,
                                   ),
                                 ),
                               ),
                             ),
                           );
-                        },
+                        }),
                       ),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        height: 50,
-                        child: _RollingNames(
-                          names: _nameVariants,
-                          progress: _spinEase.value,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-              ),
+                    );
+                  },
+                ),
+
+                // Scrolling names with motion blur + perspective.
+                AnimatedBuilder(
+                  animation: _scrollCtrl,
+                  builder: (context, _) {
+                    final t = Curves.easeOut.transform(_scrollCtrl.value);
+                    return _StackedNameRoll(
+                      names: _nameVariants,
+                      t: t,
+                      color: theme.isDark ? Colors.white : const Color(0xFF0E1628),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
-  }
-
-  List<Widget> _buildRays(AppThemeData theme) {
-    // Rays disabled per design feedback.
-    return const [];
   }
 }
 
@@ -182,53 +163,80 @@ class _Suit {
   const _Suit({required this.icon, required this.color});
 }
 
-class _RollingNames extends StatelessWidget {
+class _StackedNameRoll extends StatelessWidget {
   final List<String> names;
-  final double progress; // 0-1 looping
+  final double t; // 0-1 scroll progress
   final Color color;
 
-  const _RollingNames({
+  const _StackedNameRoll({
     required this.names,
-    required this.progress,
+    required this.t,
     required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    final total = names.length;
-    // Scroll bottom -> top smoothly.
-    final speed = 0.45;
-    final pos = (progress * speed * total);
-    final base = pos.floor() % total;
-    final frac = pos - pos.floor();
+    const double spacing = 48;
+    const double blurMax = 10;
 
-    List<Widget> items = [];
-    for (int offset = -1; offset <= 1; offset++) {
-      final idx = (base + offset + total) % total;
-      final dy = (offset - frac) * 18;
-      final opacity = offset == 0 ? 1.0 : 0.25;
-      items.add(Transform.translate(
-        offset: Offset(0, dy),
-        child: Opacity(
-          opacity: opacity,
-          child: Text(
-            names[idx],
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: offset == 0 ? 16 : 14,
-              fontWeight: offset == 0 ? FontWeight.w800 : FontWeight.w600,
-              letterSpacing: 0.5,
-              color: color,
-            ),
-          ),
-        ),
-      ));
-    }
+    // Start with list slightly below center and slide up.
+    final double travel = spacing * (names.length - 1);
+    final double baseOffset = lerpDouble(spacing * 1.5, -spacing * 0.3, t)!;
 
     return ClipRect(
-      child: Stack(
+      child: Transform(
         alignment: Alignment.center,
-        children: items,
+        transform: Matrix4.identity()
+          ..setEntry(3, 2, 0.0011)
+          ..rotateY(-0.18)
+          ..setEntry(0, 1, -0.08) // skew Y -> X (approximate)
+          ..scale(1.06, 1.02),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Soft gradient mask to fade top/bottom edges.
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.10),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  ),
+                ),
+              ),
+            ),
+            ...List.generate(names.length, (i) {
+              final dy = baseOffset + i * spacing - travel * t;
+              final centerWeight = 1 - (dy.abs() / (spacing * 2)).clamp(0.0, 1.0);
+              final sigma = blurMax * (0.6 + (1 - centerWeight)) * (1 - t * 0.6);
+              final opacity = (0.25 + centerWeight * 0.75).clamp(0.0, 1.0);
+
+              return Transform.translate(
+                offset: Offset(0, dy),
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaY: sigma, sigmaX: sigma * 0.3),
+                  child: Text(
+                    names[i],
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 38,
+                      height: 1.05,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.8,
+                      color: color.withValues(alpha: opacity),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

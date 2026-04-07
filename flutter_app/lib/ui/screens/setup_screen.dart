@@ -465,7 +465,23 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
                       ],
                     ),
                   );
-                  if (ok == true && context.mounted) notifier.newGame();
+                  if (ok == true && context.mounted) {
+                    final really = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Confirm reset'),
+                        content: const Text('All rounds and scores will be wiped. This action cannot be undone.'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Go Back')),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Yes, reset', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (really == true && context.mounted) notifier.newGame();
+                  }
                 }
                 return;
               }
