@@ -164,18 +164,20 @@ class GameNotifier extends StateNotifier<GameState> {
         ? ['♠️', '♥️', '♣️', '♦️', 'NT'] 
         : ['♠️', '♥️', '♣️', '♦️'];
 
-    // Start with first round only; subsequent rounds extend endlessly.
     final firstRound = GameRound(
       cards: state.startingCards,
       trump: activeSuits[0],
     );
+
+    // countdown: decrements each round. constant: always same card count.
+    final initialStep = state.roundStyle == 'countdown' ? -1 : 0;
 
     state = state.copyWith(
       rounds: [firstRound],
       currentRoundIdx: 0,
       phase: GamePhase.bidding,
       players: state.players.map((p) => p.copyWith(totalScore: 0, roundChange: 0)).toList(),
-      roundStep: -1,
+      roundStep: initialStep,
       trumpIndex: 0,
     );
   }
@@ -247,16 +249,25 @@ class GameNotifier extends StateNotifier<GameState> {
     final firstPlayer = rotatedPlayers.removeAt(0);
     rotatedPlayers.add(firstPlayer);
 
-    // Determine next cards using a sawtooth pattern between 1 and startingCards
     final currentCards = state.rounds[state.currentRoundIdx].cards;
     int step = state.roundStep;
-    int nextCards = currentCards + step;
-    if (nextCards < 1) {
-      step = 1;
-      nextCards = 2; // bounce up
-    } else if (nextCards > state.startingCards) {
-      step = -1;
-      nextCards = state.startingCards - 1;
+    int nextCards;
+
+    if (step == 0) {
+      // Constant mode: card count never changes.
+      nextCards = currentCards;
+    } else {
+      // Countdown mode: sawtooth between 1 and startingCards (inclusive).
+      nextCards = currentCards + step;
+      if (nextCards < 1) {
+        // Hit the floor — bounce upward from 1.
+        step = 1;
+        nextCards = 1;
+      } else if (nextCards > state.startingCards) {
+        // Hit the ceiling — bounce downward from startingCards.
+        step = -1;
+        nextCards = state.startingCards;
+      }
     }
 
     final activeSuits = state.includeNoTrump 

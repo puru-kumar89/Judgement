@@ -134,7 +134,7 @@ class _BiddingScreenState extends ConsumerState<BiddingScreen> {
                   ),
                 ),
                 child: Text(
-                  'Total bids: $totalBids / ${currentRound.cards}',
+                  'Total bids: $totalBids',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
