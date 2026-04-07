@@ -70,8 +70,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('PLAYERS', style: TextStyle(fontSize: 13, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: theme.textMain)),
-                        const SizedBox(height: 2),
-                        Text('Min 3, max 10 players · drag ≡ to reorder', style: TextStyle(fontSize: 12, color: theme.textMuted)),
                       ],
                     ),
                     if (state.players.length < 10)
@@ -368,8 +366,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
           ),
           const SizedBox(height: 14),
           PrimaryButton(
-            label: 'Start Game',
-            onPressed: () {
+            label: notifier.hasActiveGame ? 'Start / Continue' : 'Start Game',
+            onPressed: () async {
+              // Validate names first
               final activePlayers = state.players.where((p) => p.name.trim().isNotEmpty).toList();
               if (activePlayers.length < 3) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -384,10 +383,92 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
                 );
                 return;
               }
+
+              // If a game is already in progress, present 3 options
+              if (notifier.hasActiveGame) {
+                final choice = await showDialog<String>(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Active game in progress'),
+                    content: const Text(
+                        'You have an ongoing game with saved scores.\n\nWhat would you like to do?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, 'continue'),
+                        child: const Text('Continue Game'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, 'rules'),
+                        child: const Text('Apply New Rules'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, 'new'),
+                        child: const Text('New Game', style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
+                if (choice == null || !context.mounted) return;
+
+                if (choice == 'continue') {
+                  // Confirm and resume
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Resume game?'),
+                      content: const Text('You\'ll be taken back to where you left off. Any setup changes made will not be applied.'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Resume')),
+                      ],
+                    ),
+                  );
+                  if (ok == true && context.mounted) notifier.continueGame();
+
+                } else if (choice == 'rules') {
+                  // Confirm and apply new rules keeping scores
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Apply new rules?'),
+                      content: const Text('Current scores are kept. The updated settings will take effect from the next round onwards.'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Apply Rules')),
+                      ],
+                    ),
+                  );
+                  if (ok == true && context.mounted) notifier.applyNewRules();
+
+                } else if (choice == 'new') {
+                  // Confirm and start fresh
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Start a new game?'),
+                      content: const Text('This will permanently end the current game and reset all scores. This cannot be undone.'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Start New Game', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (ok == true && context.mounted) notifier.newGame();
+                }
+                return;
+              }
+
+              // No active game — start normally
               try {
                 notifier.startGame();
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                }
               }
             },
           ),

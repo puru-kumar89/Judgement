@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,21 +21,115 @@ class GameNotifier extends StateNotifier<GameState> {
 
   final List<String> _suits = ['♠️', '♥️', '♦️', '♣️'];
   static const _prefsPrefix = 'kaat_settings_';
-  bool _prefsLoaded = false;
+  static const _activeGameKey = 'kaat_active_game';
+
+  // ─── Persistence ────────────────────────────────────────────────
+
   Future<void> _persistPlayers(List<Player> players) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('${_prefsPrefix}players', players.map((p) => p.name).toList());
   }
 
+  /// Persist the full game state so a page refresh restores the active session.
+  Future<void> _persistGameState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final s = state;
+
+    // Only persist if there is an active / navigated-home game.
+    if (s.rounds.isEmpty) {
+      await prefs.remove(_activeGameKey);
+      return;
+    }
+
+    final json = jsonEncode({
+      'phase': s.phase.name,
+      'currentRoundIdx': s.currentRoundIdx,
+      'roundStep': s.roundStep,
+      'trumpIndex': s.trumpIndex,
+      'players': s.players.map((p) => {
+        'id': p.id,
+        'name': p.name,
+        'totalScore': p.totalScore,
+        'roundChange': p.roundChange,
+      }).toList(),
+      'rounds': s.rounds.map((r) => {
+        'cards': r.cards,
+        'trump': r.trump,
+        'bids': r.bids,
+        'actuals': r.actuals,
+      }).toList(),
+    });
+    await prefs.setString(_activeGameKey, json);
+  }
+
+  Future<void> _clearGameState() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_activeGameKey);
+  }
+
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    final storedNames = prefs.getStringList('${_prefsPrefix}players') ?? [];
 
+    // ── Try to restore an active game first ──
+    final savedGame = prefs.getString(_activeGameKey);
+    if (savedGame != null) {
+      try {
+        final m = jsonDecode(savedGame) as Map<String, dynamic>;
+
+        final restoredPlayers = (m['players'] as List).map((p) => Player(
+          id: p['id'] as String,
+          name: p['name'] as String,
+          totalScore: p['totalScore'] as int,
+          roundChange: p['roundChange'] as int,
+        )).toList();
+
+        final restoredRounds = (m['rounds'] as List).map((r) {
+          final rawBids = r['bids'] as Map<String, dynamic>;
+          final rawActuals = r['actuals'] as Map<String, dynamic>;
+          return GameRound(
+            cards: r['cards'] as int,
+            trump: r['trump'] as String,
+            bids: rawBids.map((k, v) => MapEntry(k, v as int)),
+            actuals: rawActuals.map((k, v) => MapEntry(k, v as int)),
+          );
+        }).toList();
+
+        final phaseStr = m['phase'] as String;
+        final restoredPhase = GamePhase.values.firstWhere(
+          (e) => e.name == phaseStr,
+          orElse: () => GamePhase.bidding,
+        );
+
+        // Also reload settings from prefs for the restored session.
+        state = state.copyWith(
+          phase: restoredPhase,
+          players: restoredPlayers,
+          rounds: restoredRounds,
+          currentRoundIdx: m['currentRoundIdx'] as int,
+          roundStep: m['roundStep'] as int,
+          trumpIndex: m['trumpIndex'] as int,
+          startingCards: prefs.getInt('${_prefsPrefix}startingCards') ?? state.startingCards,
+          roundStyle: prefs.getString('${_prefsPrefix}roundStyle') ?? state.roundStyle,
+          lenientOvertrick: prefs.getBool('${_prefsPrefix}lenientOvertrick') ?? state.lenientOvertrick,
+          successMultiplier: prefs.getInt('${_prefsPrefix}successMultiplier') ?? state.successMultiplier,
+          penaltyMultiplier: prefs.getInt('${_prefsPrefix}penaltyMultiplier') ?? state.penaltyMultiplier,
+          overtrickBonus: prefs.getInt('${_prefsPrefix}overtrickBonus') ?? state.overtrickBonus,
+          includeNoTrump: prefs.getBool('${_prefsPrefix}includeNoTrump') ?? state.includeNoTrump,
+          prefsLoaded: true,
+        );
+        return;
+      } catch (_) {
+        // Corrupted save — fall through to normal prefs load.
+        await prefs.remove(_activeGameKey);
+      }
+    }
+
+    // ── Normal prefs load (no active game) ──
+    final storedNames = prefs.getStringList('${_prefsPrefix}players') ?? [];
     List<Player> playersFromPrefs = storedNames.asMap().entries.map((e) {
       return Player(id: (e.key + 1).toString(), name: e.value);
     }).toList();
 
-    // Ensure at least 3 empty slots
     while (playersFromPrefs.length < 3) {
       playersFromPrefs.add(Player(id: (playersFromPrefs.length + 1).toString(), name: ''));
     }
@@ -50,7 +145,6 @@ class GameNotifier extends StateNotifier<GameState> {
       includeNoTrump: prefs.getBool('${_prefsPrefix}includeNoTrump') ?? state.includeNoTrump,
       prefsLoaded: true,
     );
-    _prefsLoaded = true;
   }
 
   Future<void> _persistPrefs(GameState next) async {
@@ -65,7 +159,6 @@ class GameNotifier extends StateNotifier<GameState> {
     await prefs.setBool('${_prefsPrefix}includeNoTrump', next.includeNoTrump);
   }
 
-  /// Load saved settings once when the notifier is created.
   void init() {
     _loadPrefs();
   }
@@ -89,6 +182,8 @@ class GameNotifier extends StateNotifier<GameState> {
     await _persistPrefs(state);
   }
 
+  // ─── Settings ───────────────────────────────────────────────────
+
   void updateSettings({
     int? startingCards,
     String? roundStyle,
@@ -111,7 +206,10 @@ class GameNotifier extends StateNotifier<GameState> {
     _persistPrefs(next);
   }
 
+  // ─── Player management ──────────────────────────────────────────
+
   void addPlayer() {
+    if (state.players.length >= 10) return;
     final newList = List<Player>.from(state.players);
     newList.add(Player(id: DateTime.now().millisecondsSinceEpoch.toString(), name: ''));
     state = state.copyWith(players: newList);
@@ -146,8 +244,6 @@ class GameNotifier extends StateNotifier<GameState> {
   void setDealer(String playerId) {
     if (state.players.isEmpty) return;
     if (state.players.first.id == playerId) return;
-
-    // Rotate so selected player is at the front (dealer)
     var currentPlayers = List<Player>.from(state.players);
     while (currentPlayers.first.id != playerId) {
       var first = currentPlayers.removeAt(0);
@@ -157,11 +253,42 @@ class GameNotifier extends StateNotifier<GameState> {
     _persistPlayers(state.players);
   }
 
-  void startGame() {
-    if (state.players.length < 3) return;
+  // ─── Game lifecycle ─────────────────────────────────────────────
 
-    final List<String> activeSuits = state.includeNoTrump 
-        ? ['♠️', '♥️', '♣️', '♦️', 'NT'] 
+  /// Whether there is a game currently in progress (rounds played / scores exist).
+  bool get hasActiveGame => state.rounds.isNotEmpty;
+
+  /// Navigate to the setup screen WITHOUT losing game data.
+  /// Called when the user taps the KAAT logo during a game.
+  void navigateHome() {
+    state = state.copyWith(phase: GamePhase.setup);
+    _persistGameState(); // persist the setup-phase so refresh shows home, game data intact
+  }
+
+  /// Infer what phase the active game should return to based on current data.
+  GamePhase _inferActivePhase() {
+    if (state.rounds.isEmpty) return GamePhase.setup;
+    final round = state.rounds[state.currentRoundIdx];
+    final hasScores = state.players.any((p) => p.totalScore != 0) ||
+        state.currentRoundIdx > 0;
+    if (!hasScores && round.bids.isEmpty) return GamePhase.bidding;
+    final allHaveActuals = state.players.every((p) => round.actuals.containsKey(p.id));
+    if (allHaveActuals) return GamePhase.leaderboard;
+    final allHaveBids = state.players.every((p) => round.bids.containsKey(p.id));
+    if (allHaveBids) return GamePhase.results;
+    return GamePhase.bidding;
+  }
+
+  /// Return to the active game from the setup screen (logo-tap scenario).
+  void continueGame() {
+    state = state.copyWith(phase: _inferActivePhase());
+    _persistGameState();
+  }
+
+  /// Start a completely fresh game — clears all scores and rounds.
+  void newGame() {
+    final List<String> activeSuits = state.includeNoTrump
+        ? ['♠️', '♥️', '♣️', '♦️', 'NT']
         : ['♠️', '♥️', '♣️', '♦️'];
 
     final firstRound = GameRound(
@@ -169,46 +296,102 @@ class GameNotifier extends StateNotifier<GameState> {
       trump: activeSuits[0],
     );
 
-    // countdown: decrements each round. constant: always same card count.
     final initialStep = state.roundStyle == 'countdown' ? -1 : 0;
 
     state = state.copyWith(
       rounds: [firstRound],
       currentRoundIdx: 0,
       phase: GamePhase.bidding,
-      players: state.players.map((p) => p.copyWith(totalScore: 0, roundChange: 0)).toList(),
+      players: state.players
+          .map((p) => p.copyWith(totalScore: 0, roundChange: 0))
+          .toList(),
       roundStep: initialStep,
       trumpIndex: 0,
     );
+    _persistGameState();
+  }
+
+  /// Apply updated settings to the current game without resetting scores.
+  /// New settings take effect from the next round.
+  void applyNewRules({
+    int? startingCards,
+    String? roundStyle,
+    bool? lenientOvertrick,
+    int? successMultiplier,
+    int? penaltyMultiplier,
+    int? overtrickBonus,
+    bool? includeNoTrump,
+  }) {
+    final next = state.copyWith(
+      startingCards: startingCards,
+      roundStyle: roundStyle,
+      lenientOvertrick: lenientOvertrick,
+      successMultiplier: successMultiplier,
+      penaltyMultiplier: penaltyMultiplier,
+      overtrickBonus: overtrickBonus,
+      includeNoTrump: includeNoTrump,
+      phase: _inferActivePhase(),
+    );
+    state = next;
+    _persistPrefs(next);
+    _persistGameState();
+  }
+
+  void startGame() {
+    if (state.players.length < 3) return;
+
+    final List<String> activeSuits = state.includeNoTrump
+        ? ['♠️', '♥️', '♣️', '♦️', 'NT']
+        : ['♠️', '♥️', '♣️', '♦️'];
+
+    final firstRound = GameRound(
+      cards: state.startingCards,
+      trump: activeSuits[0],
+    );
+
+    final initialStep = state.roundStyle == 'countdown' ? -1 : 0;
+
+    state = state.copyWith(
+      rounds: [firstRound],
+      currentRoundIdx: 0,
+      phase: GamePhase.bidding,
+      players: state.players
+          .map((p) => p.copyWith(totalScore: 0, roundChange: 0))
+          .toList(),
+      roundStep: initialStep,
+      trumpIndex: 0,
+    );
+    _persistGameState();
   }
 
   void setBid(String playerId, int bid) {
     final currentRound = state.rounds[state.currentRoundIdx];
     final newBids = Map<String, int>.from(currentRound.bids);
     newBids[playerId] = bid;
-    
     final newRounds = List<GameRound>.from(state.rounds);
     newRounds[state.currentRoundIdx] = currentRound.copyWith(bids: newBids);
     state = state.copyWith(rounds: newRounds);
+    _persistGameState();
   }
 
   void startPlaying() {
     state = state.copyWith(phase: GamePhase.results);
+    _persistGameState();
   }
-  
+
   void setActual(String playerId, int actual) {
     final currentRound = state.rounds[state.currentRoundIdx];
     final newActuals = Map<String, int>.from(currentRound.actuals);
     newActuals[playerId] = actual;
-    
     final newRounds = List<GameRound>.from(state.rounds);
     newRounds[state.currentRoundIdx] = currentRound.copyWith(actuals: newActuals);
     state = state.copyWith(rounds: newRounds);
+    _persistGameState();
   }
 
   void calculateScores() {
     final currentRound = state.rounds[state.currentRoundIdx];
-    
+
     int totalActuals = currentRound.actuals.values.fold(0, (sum, val) => sum + val);
     if (totalActuals != currentRound.cards) {
       throw Exception("Total tricks ($totalActuals) must equal cards dealt (${currentRound.cards}).");
@@ -241,6 +424,7 @@ class GameNotifier extends StateNotifier<GameState> {
       players: updatedPlayers,
       phase: GamePhase.leaderboard,
     );
+    _persistGameState();
   }
 
   void nextRound() {
@@ -260,18 +444,16 @@ class GameNotifier extends StateNotifier<GameState> {
       // Countdown mode: sawtooth between 1 and startingCards (inclusive).
       nextCards = currentCards + step;
       if (nextCards < 1) {
-        // Hit the floor — bounce upward from 1.
         step = 1;
         nextCards = 1;
       } else if (nextCards > state.startingCards) {
-        // Hit the ceiling — bounce downward from startingCards.
         step = -1;
         nextCards = state.startingCards;
       }
     }
 
-    final activeSuits = state.includeNoTrump 
-        ? ['♠️', '♥️', '♣️', '♦️', 'NT'] 
+    final activeSuits = state.includeNoTrump
+        ? ['♠️', '♥️', '♣️', '♦️', 'NT']
         : ['♠️', '♥️', '♣️', '♦️'];
     final nextTrumpIndex = (state.trumpIndex + 1) % activeSuits.length;
 
@@ -289,14 +471,28 @@ class GameNotifier extends StateNotifier<GameState> {
       trumpIndex: nextTrumpIndex,
       phase: GamePhase.bidding,
     );
+    _persistGameState();
   }
 
   void forceEndGame() {
     state = state.copyWith(phase: GamePhase.finished);
+    _persistGameState();
   }
 
+  /// Fully reset — clear saved game and return to fresh setup.
   void restartGame() {
-    state = state.copyWith(phase: GamePhase.setup);
+    final freshPlayers = state.players
+        .map((p) => p.copyWith(totalScore: 0, roundChange: 0))
+        .toList();
+    state = state.copyWith(
+      phase: GamePhase.setup,
+      rounds: [],
+      currentRoundIdx: 0,
+      roundStep: -1,
+      trumpIndex: 0,
+      players: freshPlayers,
+    );
+    _clearGameState();
   }
 
   void goBack() {
@@ -306,11 +502,9 @@ class GameNotifier extends StateNotifier<GameState> {
       if (state.currentRoundIdx == 0) {
         state = state.copyWith(phase: GamePhase.setup);
       } else {
-        // We came from the leaderboard of the previous round. Un-rotate players.
         final unrotatedPlayers = List<Player>.from(state.players);
         final lastPlayer = unrotatedPlayers.removeLast();
         unrotatedPlayers.insert(0, lastPlayer);
-        
         state = state.copyWith(
           currentRoundIdx: state.currentRoundIdx - 1,
           players: unrotatedPlayers,
@@ -320,19 +514,17 @@ class GameNotifier extends StateNotifier<GameState> {
     } else if (state.phase == GamePhase.results) {
       state = state.copyWith(phase: GamePhase.bidding);
     } else if (state.phase == GamePhase.leaderboard) {
-      // Revert the scores calculating and go to results
       final revertedPlayers = state.players.map((p) => p.copyWith(
         totalScore: p.totalScore - p.roundChange,
         roundChange: 0,
       )).toList();
-      
       state = state.copyWith(
         players: revertedPlayers,
         phase: GamePhase.results,
       );
     } else if (state.phase == GamePhase.finished) {
-      // Finished comes from leaderboard of current index
       state = state.copyWith(phase: GamePhase.leaderboard);
     }
+    _persistGameState();
   }
 }

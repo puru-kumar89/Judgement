@@ -86,22 +86,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 icon: Icon(Icons.arrow_back_ios_new, color: theme.textMain),
                                 onPressed: () => ref.read(gameProvider.notifier).goBack(),
                               ),
-                            RichText(
-                              text: TextSpan(
-                                style: TextStyle(
-                                  fontFamily: 'Space Grotesk',
-                                  fontSize: 38,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -2,
-                                  color: theme.textMain,
-                                ),
-                                children: [
-                                  const TextSpan(text: 'Ka'),
-                                  TextSpan(
-                                    text: 'at',
-                                    style: TextStyle(color: theme.accent),
+                            GestureDetector(
+                              onTap: () {
+                                final notifier = ref.read(gameProvider.notifier);
+                                if (phase != GamePhase.setup) {
+                                  notifier.navigateHome();
+                                }
+                              },
+                              child: RichText(
+                                text: TextSpan(
+                                  style: TextStyle(
+                                    fontFamily: 'Space Grotesk',
+                                    fontSize: 38,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -2,
+                                    color: theme.textMain,
                                   ),
-                                ],
+                                  children: [
+                                    const TextSpan(text: 'Ka'),
+                                    TextSpan(
+                                      text: 'at',
+                                      style: TextStyle(color: theme.accent),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                             IconButton(
