@@ -5,9 +5,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../theme/theme_provider.dart';
+import '../../theme/app_theme.dart';
 
-/// Startup flourish that mimics the stacked, motion-blurred name roll
-/// from the provided reference clip. Very quick, non-blocking, tap-to-skip.
+/// Startup intro that features a spinning 3D card and a vertical name roll
+/// that lands on the brand name "KAAT" with a cinematic, fluid transition.
 class StartIntroOverlay extends ConsumerStatefulWidget {
   final VoidCallback onFinished;
 
@@ -19,9 +20,9 @@ class StartIntroOverlay extends ConsumerStatefulWidget {
 
 class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
     with TickerProviderStateMixin {
-  late final AnimationController _scrollCtrl;
-  late final AnimationController _fadeCtrl;
-  late final AnimationController _suitCtrl;
+  late final AnimationController _mainCtrl; // Overall timeline (2 seconds)
+  late final AnimationController _suitCtrl; // Spin loop
+  late final AnimationController _fadeCtrl; // Final screen fade out
   bool _finished = false;
 
   final List<String> _nameVariants = const [
@@ -32,6 +33,7 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
     'Jut Patti',
     'Call Break',
     'Hand of Fate',
+    'Kaat',
   ];
 
   final List<_Suit> _suits = const [
@@ -44,35 +46,41 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
   @override
   void initState() {
     super.initState();
-
-    _scrollCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1100),
+    // Total duration for a premium, grounded feel.
+    _mainCtrl = AnimationController(
+       vsync: this,
+       duration: const Duration(milliseconds: 2400),
     )..forward();
 
     _suitCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
+       vsync: this,
+       duration: const Duration(milliseconds: 700),
     )..repeat();
 
     _fadeCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 260),
+       vsync: this,
+       duration: const Duration(milliseconds: 320),
     );
 
-    // Auto finish slightly after scroll completes.
-    Future.delayed(const Duration(milliseconds: 1400), _finish);
+    // Coordination: wait for settle, then finish.
+    _mainCtrl.addStatusListener((status) {
+       if (status == AnimationStatus.completed) {
+         Future.delayed(const Duration(milliseconds: 250), _finish);
+       }
+    });
   }
 
   void _finish() {
     if (_finished) return;
     _finished = true;
-    _fadeCtrl.forward().whenComplete(widget.onFinished);
+    if (mounted) {
+      _fadeCtrl.forward().whenComplete(widget.onFinished);
+    }
   }
 
   @override
   void dispose() {
-    _scrollCtrl.dispose();
+    _mainCtrl.dispose();
     _suitCtrl.dispose();
     _fadeCtrl.dispose();
     super.dispose();
@@ -90,66 +98,111 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
           behavior: HitTestBehavior.opaque,
           onTap: _finish,
           child: Container(
-            color: theme.isDark
-                ? Colors.black.withValues(alpha: 0.60)
-                : Colors.white.withValues(alpha: 0.62),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Suits fan in the background for a split-second flip.
-                AnimatedBuilder(
-                  animation: _suitCtrl,
-                  builder: (context, _) {
-                    final t = _suitCtrl.value;
-                    return Transform.rotate(
-                      angle: sin(t * pi * 2) * 0.08,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: List.generate(_suits.length, (i) {
-                          final delay = i * 0.08;
-                          final localT = ((t - delay) * 1.2).clamp(0.0, 1.0);
-                          final flip = Tween(begin: pi, end: 0.0).transform(localT);
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: Transform(
-                              alignment: Alignment.center,
-                              transform: Matrix4.identity()
-                                ..setEntry(3, 2, 0.0013)
-                                ..rotateY(flip),
-                              child: Opacity(
-                                opacity: localT,
-                                child: Text(
-                                  _suits[i].icon,
-                                  style: TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w900,
-                                    color: _suits[i].color,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                    );
-                  },
-                ),
+            color: Colors.black, // Dark cinematic backdrop
+            child: AnimatedBuilder(
+              animation: _mainCtrl,
+              builder: (context, _) {
+                final t = _mainCtrl.value;
+                // Timeline: 
+                // 0.0 to 0.70: Generic Name Roll + Spinning Card
+                // 0.70 to 1.0: Outro (Card fades, KAAT moves in)
+                
+                final double outroStart = 0.70;
+                final double outroT = ((t - outroStart) / (1.0 - outroStart)).clamp(0.0, 1.0);
+                
+                // Curve for translation/scaling (easeInOutCubic for professional fluidity)
+                final double easeT = Curves.easeInOutCubic.transform(outroT);
+                
+                // Card fades out as outro starts.
+                final cardOpacity = (1.0 - (outroT * 1.8)).clamp(0.0, 1.0);
 
-                // Scrolling names with motion blur + perspective.
-                AnimatedBuilder(
-                  animation: _scrollCtrl,
-                  builder: (context, _) {
-                    final t = Curves.easeOut.transform(_scrollCtrl.value);
-                    return _StackedNameRoll(
-                      names: _nameVariants,
-                      t: t,
-                      color: theme.isDark ? Colors.white : const Color(0xFF0E1628),
-                    );
-                  },
-                ),
-              ],
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Spinning card on top
+                        Opacity(
+                          opacity: cardOpacity,
+                          child: AnimatedBuilder(
+                            animation: _suitCtrl,
+                            builder: (context, _) {
+                              final double turns = _suitCtrl.value * 2 * pi;
+                              final idx = ((_suitCtrl.value * _suits.length).floor()) % _suits.length;
+                              final suit = _suits[idx];
+                              return Transform(
+                                alignment: Alignment.center,
+                                transform: Matrix4.identity()
+                                  ..setEntry(3, 2, 0.0014)
+                                  ..rotateY(turns)
+                                  ..scale(1.0),
+                                child: _CardWidget(suit: suit, theme: theme),
+                              );
+                            },
+                          ),
+                        ),
+                        
+                        // We use a fixed Spacer to maintain consistent layout during the move.
+                        const SizedBox(height: 38),
+
+                        // The name roll (fades as landing starts)
+                        _StackedNameRoll(
+                          names: _nameVariants,
+                          t: t,
+                          outroT: easeT, // Use the ease-in-out curve
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CardWidget extends StatelessWidget {
+  final _Suit suit;
+  final AppThemeData theme;
+
+  const _CardWidget({required this.suit, required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 140,
+      height: 180,
+      decoration: BoxDecoration(
+        color: Colors.black, // Dark fill
+        gradient: RadialGradient(
+          colors: [
+            Colors.white.withValues(alpha: 0.1),
+            Colors.transparent,
+          ],
+          radius: 1.2,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.03),
+            blurRadius: 40,
+            spreadRadius: 2,
+          )
+        ],
+      ),
+      child: Center(
+        child: Text(
+          suit.icon,
+          style: TextStyle(
+            fontSize: 54,
+            fontWeight: FontWeight.w900,
+            color: suit.color,
           ),
         ),
       ),
@@ -165,76 +218,92 @@ class _Suit {
 
 class _StackedNameRoll extends StatelessWidget {
   final List<String> names;
-  final double t; // 0-1 scroll progress
+  final double t; // Linear 0-1
+  final double outroT; // Eased 0-1
   final Color color;
 
   const _StackedNameRoll({
     required this.names,
     required this.t,
+    required this.outroT,
     required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    const double spacing = 48;
-    const double blurMax = 10;
-
-    // Start with list slightly below center and slide up.
+    const double spacing = 45;
+    
+    // Performance Optimization: Use eased internal timing for scrolling.
+    final double scrollCurve = Curves.easeOutQuad.transform((t / 0.72).clamp(0.0, 1.0));
     final double travel = spacing * (names.length - 1);
-    final double baseOffset = lerpDouble(spacing * 1.5, -spacing * 0.3, t)!;
+    final double currentOffset = lerpDouble(spacing * 1.5, -travel, scrollCurve) ?? 0;
 
-    return ClipRect(
-      child: Transform(
-        alignment: Alignment.center,
-        transform: Matrix4.identity()
-          ..setEntry(3, 2, 0.0011)
-          ..rotateY(-0.18)
-          ..setEntry(0, 1, -0.08) // skew Y -> X (approximate)
-          ..scale(1.06, 1.02),
-        child: Stack(
-          alignment: Alignment.center,
+    final String landingText = 'KAAT';
+    
+    // Cinematic movement: Move UP ~218px and scale from 1.0 to 1.45.
+    final double verticalMove = outroT * -218;
+    final double scaleUp = 1.0 + (outroT * 0.45);
+    final double brandOpacity = (outroT * 2.0).clamp(0.0, 1.0);
+    final double listOpacity = (1.0 - (outroT * 4.0)).clamp(0.0, 1.0);
+
+    return Transform.translate(
+      offset: Offset(0, verticalMove),
+      child: Transform.scale(
+        scale: scaleUp,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Soft gradient mask to fade top/bottom edges.
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.10),
-                      Colors.transparent,
-                    ],
-                    stops: const [0.0, 0.5, 1.0],
-                  ),
-                ),
-              ),
-            ),
-            ...List.generate(names.length, (i) {
-              final dy = baseOffset + i * spacing - travel * t;
-              final centerWeight = 1 - (dy.abs() / (spacing * 2)).clamp(0.0, 1.0);
-              final sigma = blurMax * (0.6 + (1 - centerWeight)) * (1 - t * 0.6);
-              final opacity = (0.25 + centerWeight * 0.75).clamp(0.0, 1.0);
-
-              return Transform.translate(
-                offset: Offset(0, dy),
-                child: ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaY: sigma, sigmaX: sigma * 0.3),
-                  child: Text(
-                    names[i],
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 38,
-                      height: 1.05,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.8,
-                      color: color.withValues(alpha: opacity),
+            // Rolling Name List (Fade-out during outro)
+            if (listOpacity > 0.0)
+              Opacity(
+                opacity: listOpacity,
+                child: ClipRect(
+                  child: SizedBox(
+                    height: spacing * 2.2,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: List.generate(names.length, (i) {
+                        final dy = currentOffset + i * spacing;
+                        // Avoid ImageFiltered for performance — distance-based transparency only.
+                        final dist = (dy.abs() / (spacing * 1.25)).clamp(0.0, 1.0);
+                        final opacity = (1.0 - (dist * 0.85)).clamp(0.0, 1.0);
+                        
+                        return Transform.translate(
+                          offset: Offset(0, dy),
+                          child: Opacity(
+                            opacity: opacity,
+                            child: Text(
+                              names[i],
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: color,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
                     ),
                   ),
                 ),
-              );
-            }),
+              ),
+
+            // Fluid Brand Name "KAAT" Fade-in.
+            if (brandOpacity > 0.0)
+              Opacity(
+                opacity: brandOpacity,
+                child: Text(
+                  landingText,
+                  style: TextStyle(
+                    fontFamily: 'Space Grotesk',
+                    fontSize: 48,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -2,
+                    color: color,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
