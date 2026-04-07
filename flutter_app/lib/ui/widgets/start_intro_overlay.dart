@@ -37,10 +37,10 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
   ];
 
   final List<_Suit> _suits = const [
-    _Suit(icon: '♠', color: Color(0xFF1E2330)),
-    _Suit(icon: '♥', color: Color(0xFFD00231)),
-    _Suit(icon: '♣', color: Color(0xFF0C9A3E)),
-    _Suit(icon: '♦', color: Color(0xFFE3123C)),
+    _Suit(icon: '♠', color: Colors.white),
+    _Suit(icon: '♥', color: Color(0xFFC5A028)),
+    _Suit(icon: '♣', color: Colors.white),
+    _Suit(icon: '♦', color: Color(0xFFC5A028)),
   ];
 
   @override
