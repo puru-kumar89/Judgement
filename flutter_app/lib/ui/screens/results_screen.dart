@@ -72,14 +72,32 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                bottomContent: Row(
+                bottomContent: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(isValid ? Icons.check_circle : Icons.error_outline, 
-                        color: isValid ? theme.success : theme.danger, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      '$totalActuals / ${currentRound.cards} Tricks',
-                      style: TextStyle(color: isValid ? theme.success : theme.danger, fontWeight: FontWeight.bold, letterSpacing: 1),
+                    Row(
+                      children: [
+                        Icon(isValid ? Icons.check_circle : Icons.error_outline, 
+                            color: isValid ? theme.success : theme.danger, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$totalActuals / ${currentRound.cards} Tricks',
+                          style: TextStyle(color: isValid ? theme.success : theme.danger, fontWeight: FontWeight.bold, letterSpacing: 1),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: theme.accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: theme.accent.withValues(alpha: 0.4)),
+                      ),
+                      child: Text(
+                        'Dealer: ${state.players.isNotEmpty && state.players.first.name.isNotEmpty ? state.players.first.name : 'Player 1'}',
+                        style: TextStyle(color: theme.accent, fontWeight: FontWeight.w800),
+                      ),
                     ),
                   ],
                 ),

@@ -40,7 +40,6 @@ class _BiddingScreenState extends ConsumerState<BiddingScreen> {
     final notifier = ref.read(gameProvider.notifier);
     final currentRound = state.rounds[state.currentRoundIdx];
     final theme = ref.watch(themeProvider);
-    final positions = ['Sitting South', 'Sitting West', 'Sitting North', 'Sitting East'];
 
     int totalBids = 0;
     for (var p in state.players) {
@@ -88,13 +87,36 @@ class _BiddingScreenState extends ConsumerState<BiddingScreen> {
           ),
 
           const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: theme.accent.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.accent.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.workspace_premium_outlined, size: 16, color: theme.accent),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Dealer: ${state.players.isNotEmpty && state.players.first.name.isNotEmpty ? state.players.first.name : 'Player 1'}',
+                    style: TextStyle(color: theme.accent, fontWeight: FontWeight.w800),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           Text('ENTER BIDS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: theme.textMuted, letterSpacing: 1.4)),
           const SizedBox(height: 10),
           
           ...state.players.asMap().entries.map((entry) {
             int idx = entry.key;
             var p = entry.value;
-            bool isDealer = idx == state.players.length - 1;
+            bool isDealer = idx == 0;
             
             return Padding(
               key: ValueKey(p.id),
@@ -110,11 +132,20 @@ class _BiddingScreenState extends ConsumerState<BiddingScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(p.name, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: theme.textMain)),
                         Text(
-                          positions[idx % positions.length],
-                          style: TextStyle(fontSize: 12, color: theme.textMuted, fontWeight: FontWeight.w600),
+                          p.name.isEmpty ? 'Player ${idx + 1}' : p.name,
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: theme.textMain),
                         ),
+                        if (isDealer)
+                          Container(
+                            margin: const EdgeInsets.only(top: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: theme.accent.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text('DEALER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: theme.accent)),
+                          ),
                       ],
                     ),
                     StepperInput(
