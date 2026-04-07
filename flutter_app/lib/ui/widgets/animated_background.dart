@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../theme/theme_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../state/game_provider.dart';
 import 'art_deco_pattern.dart';
 
 class AnimatedBackground extends ConsumerWidget {
@@ -11,6 +12,7 @@ class AnimatedBackground extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = ref.watch(themeProvider);
+    final phase = ref.watch(gameProvider.select((s) => s.phase));
 
     final Gradient gradient = theme.isPremium
         ? const LinearGradient(
@@ -34,18 +36,27 @@ class AnimatedBackground extends ConsumerWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFFF7FAFD),
-                  Color(0xFFF2F6FA),
+                  Color(0xFFFFFFFF),
+                  Color(0xFFF9F9FB),
                 ],
               );
+
+    // Visibility settings for the Art Deco pattern
+    final bool showPattern = theme.isPremium || !theme.isDark;
+    final double patternOpacity = theme.isPremium ? 0.12 : 0.07;
+    final Color patternColor = theme.accent;
 
     return Container(
       decoration: BoxDecoration(gradient: gradient),
       child: Stack(
         children: [
           _buildBackgroundElements(theme),
-          if (theme.isPremium)
-            ArtDecoPattern(color: theme.accent, opacity: 0.12),
+          if (showPattern)
+            ArtDecoPattern(
+              color: patternColor, 
+              opacity: patternOpacity,
+              transitionKey: ValueKey(phase), // Trigger animation on phase change
+            ),
           child,
         ],
       ),

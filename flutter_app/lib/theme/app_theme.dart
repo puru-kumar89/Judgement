@@ -36,15 +36,15 @@ class AppThemeData {
     return const AppThemeData(
       isDark: false,
       isPremium: false,
-      background: Color(0xFFF5F8FA),
-      surfaceCard: Color(0xFFFFFFFF),
-      borderCard: Color(0xFFE9EDF2),
-      invertedCard: Color(0xFF1B1F2A),
-      accent: Color(0xFFB1002C),
-      accent2: Color(0xFFDC143C),
-      overlay: Color(0x0D000000),
-      textMain: Color(0xFF0F172A),
-      textMuted: Color(0xFF6B7280),
+      background: Color(0xFFFFFFFF),
+      surfaceCard: Color(0xFFF9F9F9),
+      borderCard: Color(0xFFF0F0F0),
+      invertedCard: Color(0xFF111111),
+      accent: Color(0xFFC5A028), // Antique Gold/Champagne
+      accent2: Color(0xFF8E731F), // Muted Bronze
+      overlay: Color(0x0A000000),
+      textMain: Color(0xFF111111),
+      textMuted: Color(0xFF757575),
     );
   }
 
@@ -69,14 +69,14 @@ class AppThemeData {
       isDark: true,
       isPremium: true,
       background: Color(0xFF000000),
-      surfaceCard: Color(0xE6050505),
-      borderCard: Color(0x33D4AF37),
-      invertedCard: Color(0xFF1B1C22),
-      accent: Color(0xFFD4AF37),
-      accent2: Color(0xFFC5A028),
+      surfaceCard: Color(0xE6080808),
+      borderCard: Color(0x1AD4AF37), // Very subtle gold border
+      invertedCard: Color(0xFF1A1B1F),
+      accent: Color(0xFFC5A028), // Antique Gold/Champagne
+      accent2: Color(0xFF8E731F), // Deep Muted Bronze
       overlay: Color(0x1AFFFFFF),
-      textMain: Color(0xFFFFFFFF),
-      textMuted: Color(0x99D4AF37),
+      textMain: Color(0xFFF8F9FA),
+      textMuted: Color(0xFF8E8E93),
     );
   }
 

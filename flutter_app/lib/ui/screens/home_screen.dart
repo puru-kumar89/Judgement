@@ -87,40 +87,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 onPressed: () => ref.read(gameProvider.notifier).goBack(),
                               ),
                             GestureDetector(
-                              onTap: () {
-                                final notifier = ref.read(gameProvider.notifier);
-                                if (phase != GamePhase.setup) {
-                                  notifier.navigateHome();
-                                }
-                              },
-                              child: RichText(
-                                text: TextSpan(
-                                  style: TextStyle(
-                                    fontFamily: 'Space Grotesk',
-                                    fontSize: 38,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -2,
-                                    color: theme.textMain,
-                                  ),
-                                  children: [
-                                    const TextSpan(text: 'Ka'),
-                                    TextSpan(
-                                      text: 'at',
-                                      style: TextStyle(color: theme.accent),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                theme.isPremium 
-                                    ? Icons.auto_awesome 
-                                    : (theme.isDark ? Icons.light_mode : Icons.dark_mode), 
-                                color: theme.isPremium ? theme.accent : theme.textMuted
-                              ),
-                              onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
-                            ),
+                               onTap: () {
+                                 final notifier = ref.read(gameProvider.notifier);
+                                 if (phase != GamePhase.setup) {
+                                   notifier.navigateHome();
+                                 }
+                               },
+                               child: RichText(
+                                 text: TextSpan(
+                                   style: TextStyle(
+                                     fontFamily: 'Space Grotesk',
+                                     fontSize: 34,
+                                     fontWeight: FontWeight.w800,
+                                     letterSpacing: theme.isPremium ? 2.0 : -2.0, // Wider for premium branding
+                                     color: theme.textMain,
+                                   ),
+                                   children: [
+                                     TextSpan(text: theme.isPremium ? 'KA' : 'Ka'),
+                                     TextSpan(
+                                       text: theme.isPremium ? 'AT' : 'at',
+                                       style: TextStyle(
+                                         color: theme.accent,
+                                         fontWeight: theme.isPremium ? FontWeight.w900 : FontWeight.w800,
+                                       ),
+                                     ),
+                                   ],
+                                 ),
+                               ),
+                             ),
+                             IconButton(
+                               icon: Icon(
+                                 theme.isPremium 
+                                     ? Icons.auto_awesome 
+                                     : (theme.isDark ? Icons.light_mode : Icons.dark_mode), 
+                                 color: theme.isPremium ? theme.accent : theme.textMuted
+                               ),
+                               onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
+                             ),
                           ],
                         ),
                       ),

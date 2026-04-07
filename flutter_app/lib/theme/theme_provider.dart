@@ -8,14 +8,18 @@ final themeProvider = StateNotifierProvider<ThemeNotifier, AppThemeData>((ref) {
 });
 
 class ThemeNotifier extends StateNotifier<AppThemeData> {
-  ThemeVariant _variant = ThemeVariant.dark;
+  ThemeVariant _variant = ThemeVariant.premium;
 
-  ThemeNotifier() : super(AppThemeData.dark());
+  ThemeNotifier() : super(AppThemeData.premium());
 
   ThemeVariant get variant => _variant;
 
   void toggleTheme() {
     switch (_variant) {
+      case ThemeVariant.premium:
+        _variant = ThemeVariant.light;
+        state = AppThemeData.light();
+        break;
       case ThemeVariant.light:
         _variant = ThemeVariant.dark;
         state = AppThemeData.dark();
@@ -23,10 +27,6 @@ class ThemeNotifier extends StateNotifier<AppThemeData> {
       case ThemeVariant.dark:
         _variant = ThemeVariant.premium;
         state = AppThemeData.premium();
-        break;
-      case ThemeVariant.premium:
-        _variant = ThemeVariant.light;
-        state = AppThemeData.light();
         break;
     }
   }

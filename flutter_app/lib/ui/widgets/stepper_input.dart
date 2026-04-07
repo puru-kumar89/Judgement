@@ -117,7 +117,7 @@ class _StepperButton extends ConsumerWidget {
             icon,
             size: 20,
             color: enabled
-                ? (light ? const Color(0xFFD22B40) : (theme.isDark ? Colors.white : theme.textMain))
+                ? theme.accent
                 : theme.textMuted.withValues(alpha: 0.4),
           ),
         ),
