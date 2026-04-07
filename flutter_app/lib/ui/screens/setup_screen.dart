@@ -17,6 +17,19 @@ class SetupScreen extends ConsumerStatefulWidget {
 
 class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProviderStateMixin {
   bool _showAdvanced = false;
+  final Map<String, FocusNode> _focusNodes = {};
+
+  @override
+  void dispose() {
+    for (var node in _focusNodes.values) {
+      node.dispose();
+    }
+    super.dispose();
+  }
+
+  FocusNode _getNode(String id) {
+    return _focusNodes.putIfAbsent(id, () => FocusNode());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,56 +123,64 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
                       padding: const EdgeInsets.only(bottom: 10),
                       child: PremiumRowCard(
                         isActive: isDealer,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        child: Row(
-                          children: [
-                            ReorderableDragStartListener(
-                              index: index,
-                              child: Icon(Icons.drag_indicator, color: theme.textMuted),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  TextFormField(
-                                    initialValue: p.name,
-                                    onChanged: (val) => notifier.updatePlayerName(p.id, val),
-                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: theme.textMain),
-                                    decoration: InputDecoration(
-                                      hintText: 'Player ${index + 1}',
-                                      hintStyle: TextStyle(color: theme.textMuted),
-                                      border: InputBorder.none,
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.zero,
-                                    ),
-                                    textInputAction: TextInputAction.next,
-                                    autofillHints: const [AutofillHints.name],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  if (isDealer)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: theme.accent.withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(12),
+                        padding: EdgeInsets.zero, // Remove padding from card to allow GestureDetector full reach
+                        child: GestureDetector(
+                          onTap: () => _getNode(p.id).requestFocus(),
+                          behavior: HitTestBehavior.opaque,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            child: Row(
+                              children: [
+                                ReorderableDragStartListener(
+                                  index: index,
+                                  child: Icon(Icons.drag_indicator, color: theme.textMuted),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      TextFormField(
+                                        focusNode: _getNode(p.id),
+                                        initialValue: p.name,
+                                        onChanged: (val) => notifier.updatePlayerName(p.id, val),
+                                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: theme.textMain),
+                                        decoration: InputDecoration(
+                                          hintText: 'Player ${index + 1}',
+                                          hintStyle: TextStyle(color: theme.textMuted),
+                                          border: InputBorder.none,
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                        textInputAction: TextInputAction.next,
+                                        autofillHints: const [AutofillHints.name],
                                       ),
-                                      child: Text('DEALER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1, color: theme.accent)),
-                                    )
-                                  else
-                                    GestureDetector(
-                                      onTap: () => notifier.setDealer(p.id),
-                                      child: Text('Set as Dealer', style: TextStyle(fontSize: 12, color: theme.textMuted, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
-                                    ),
-                                ],
-                              ),
+                                      const SizedBox(height: 2),
+                                      if (isDealer)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: theme.accent.withValues(alpha: 0.12),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Text('DEALER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1, color: theme.accent)),
+                                        )
+                                      else
+                                        GestureDetector(
+                                          onTap: () => notifier.setDealer(p.id),
+                                          child: Text('Set as Dealer', style: TextStyle(fontSize: 12, color: theme.textMuted, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                if (state.players.length > 3)
+                                  IconButton(
+                                    icon: Icon(Icons.close, color: theme.textMuted, size: 18),
+                                    onPressed: () => notifier.removePlayer(p.id),
+                                  ),
+                              ],
                             ),
-                            if (state.players.length > 3)
-                              IconButton(
-                                icon: Icon(Icons.close, color: theme.textMuted, size: 18),
-                                onPressed: () => notifier.removePlayer(p.id),
-                              ),
-                          ],
+                          ),
                         ),
                       ),
                     );

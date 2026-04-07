@@ -133,7 +133,7 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                     ),
                     StepperInput(
                       value: currentRound.actuals[p.id] ?? 0,
-                      max: currentRound.cards,
+                      max: currentRound.cards - (totalActuals - (currentRound.actuals[p.id] ?? 0)),
                       compact: true,
                       lightStyle: true,
                       onChanged: (val) => notifier.setActual(p.id, val),
