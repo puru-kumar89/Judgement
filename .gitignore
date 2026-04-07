@@ -1,0 +1,30 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Flutter
+.build/
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+.flutter-versions
+.flutter-configuration
+flutter_export_environment.sh
+**/build/
+
+# Mac
+.DS_Store
+
+# Web build artifacts
+build/
+flutter_app/build/
+
+# Misc
+.env
+
+
+# System
+.config/
+.pub-cache/
