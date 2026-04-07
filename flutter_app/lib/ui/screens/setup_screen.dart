@@ -71,7 +71,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
                       children: [
                         Text('PLAYERS', style: TextStyle(fontSize: 13, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: theme.textMain)),
                         const SizedBox(height: 2),
-                        Text('Add up to 7 players to the table', style: TextStyle(fontSize: 12, color: theme.textMuted)),
+                        Text('Min 3, max 10 players · drag ≡ to reorder', style: TextStyle(fontSize: 12, color: theme.textMuted)),
                       ],
                     ),
                     if (state.players.length < 10)
@@ -212,7 +212,12 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text('ROUND STYLE', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                      Text('Cards decrease by 1 each round', style: TextStyle(fontSize: 11, color: theme.textMuted)),
+                      Text(
+                        state.roundStyle == 'countdown'
+                            ? 'Cards count down from ${state.startingCards} to 1 each round'
+                            : 'Every round is played with ${state.startingCards} cards',
+                        style: TextStyle(fontSize: 11, color: theme.textMuted),
+                      ),
                     ],
                   ),
                 ),
@@ -253,6 +258,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Include No-Trump (NT)', style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('Adds a round where no suit is trump', style: TextStyle(fontSize: 11, color: theme.textMuted)),
                       value: state.includeNoTrump,
                       activeColor: theme.accent,
                       onChanged: (val) => notifier.updateSettings(includeNoTrump: val),
@@ -261,6 +267,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Lenient Overtricks', style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('Winning extra tricks gives a small bonus instead of penalty', style: TextStyle(fontSize: 11, color: theme.textMuted)),
                       value: state.lenientOvertrick,
                       activeColor: theme.accent,
                       onChanged: (val) => notifier.updateSettings(lenientOvertrick: val),
@@ -270,7 +277,16 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Success Base Points', style: TextStyle(fontWeight: FontWeight.bold)),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Points per Exact Bid', style: TextStyle(fontWeight: FontWeight.bold)),
+                              Text('Pts earned per trick when bid is exact (default: 10)', style: TextStyle(fontSize: 11, color: theme.textMuted)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
                         StepperInput(
                           value: state.successMultiplier,
                           min: 1,
@@ -284,7 +300,16 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Penalty Multiplier', style: TextStyle(fontWeight: FontWeight.bold)),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Penalty Per Missed Bid', style: TextStyle(fontWeight: FontWeight.bold)),
+                              Text('Pts deducted per trick you over/under-bid (default: 10)', style: TextStyle(fontSize: 11, color: theme.textMuted)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
                         StepperInput(
                           value: state.penaltyMultiplier,
                           min: 1,
@@ -324,9 +349,20 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
               const SizedBox(width: 10),
               TextButton(
                 onPressed: () async {
-                  await notifier.resetSettings();
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Reset to Defaults?'),
+                      content: const Text('This will reset all game rules to defaults. Player names will not be affected.'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Reset', style: TextStyle(color: Colors.red))),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) await notifier.resetSettings();
                 },
-                child: Text('Reset', style: TextStyle(color: theme.textMuted, fontWeight: FontWeight.w700)),
+                child: Text('Reset to Defaults', style: TextStyle(color: theme.textMuted, fontWeight: FontWeight.w700)),
               ),
             ],
           ),
@@ -334,6 +370,20 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
           PrimaryButton(
             label: 'Start Game',
             onPressed: () {
+              final activePlayers = state.players.where((p) => p.name.trim().isNotEmpty).toList();
+              if (activePlayers.length < 3) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter names for at least 3 players.')),
+                );
+                return;
+              }
+              final unnamed = state.players.where((p) => p.name.trim().isEmpty).toList();
+              if (unnamed.isNotEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a name for every player, or remove empty slots.')),
+                );
+                return;
+              }
               try {
                 notifier.startGame();
               } catch (e) {

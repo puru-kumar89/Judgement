@@ -104,7 +104,7 @@ class _PodiumScreenState extends ConsumerState<PodiumScreen> {
 
               if (rest.isNotEmpty) ...[
                 const SizedBox(height: 28),
-                Text('Other ranks', style: TextStyle(fontWeight: FontWeight.w800, color: theme.textMain)),
+                Text('4th Place & Below', style: TextStyle(fontWeight: FontWeight.w800, color: theme.textMain)),
                 const SizedBox(height: 10),
                 Container(
                   decoration: BoxDecoration(

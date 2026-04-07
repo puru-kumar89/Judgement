@@ -147,7 +147,23 @@ class LeaderboardScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: TextButton(
-                onPressed: () => notifier.forceEndGame(),
+                onPressed: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('End game early?'),
+                      content: const Text('This will finalise scores with rounds played so far and show the final results.'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep Playing')),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('End Game', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) notifier.forceEndGame();
+                },
                 child: Text('End Game Early', style: TextStyle(color: theme.danger, fontWeight: FontWeight.bold)),
               ),
             ),

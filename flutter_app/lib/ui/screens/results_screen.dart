@@ -106,7 +106,7 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
           ),
           
           const SizedBox(height: 12),
-          Text('ACTUAL TRICKS WON', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: theme.textMuted, letterSpacing: 1.4)),
+          Text('TRICKS WON THIS ROUND', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: theme.textMuted, letterSpacing: 1.4)),
           const SizedBox(height: 10),
           
           ...state.players.map((p) {
@@ -125,7 +125,7 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(p.name, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: theme.textMain)),
+                            Text(p.name.isEmpty ? 'Player ${state.players.indexOf(p) + 1}' : p.name, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: theme.textMain)),
                             Text('Bid: $bid', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textMuted)),
                           ],
                         ),

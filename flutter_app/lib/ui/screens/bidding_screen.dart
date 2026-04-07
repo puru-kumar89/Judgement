@@ -110,7 +110,41 @@ class _BiddingScreenState extends ConsumerState<BiddingScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Text('ENTER BIDS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: theme.textMuted, letterSpacing: 1.4)),
+          // Live bid counter
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('ENTER BIDS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: theme.textMuted, letterSpacing: 1.4)),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: isHook
+                      ? theme.danger.withValues(alpha: 0.15)
+                      : (totalBids == currentRound.cards
+                          ? theme.success.withValues(alpha: 0.15)
+                          : theme.accent.withValues(alpha: 0.10)),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isHook
+                        ? theme.danger.withValues(alpha: 0.5)
+                        : (totalBids > 0
+                            ? theme.accent.withValues(alpha: 0.35)
+                            : theme.borderCard),
+                  ),
+                ),
+                child: Text(
+                  'Total bids: $totalBids / ${currentRound.cards}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: isHook ? theme.danger : theme.accent,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 10),
           
           ...state.players.asMap().entries.map((entry) {
@@ -124,8 +158,12 @@ class _BiddingScreenState extends ConsumerState<BiddingScreen> {
               child: PremiumRowCard(
                 isActive: isDealer,
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                backgroundColor: theme.isDark ? theme.surfaceCard : Colors.white,
-                borderColor: isDealer ? theme.accent.withValues(alpha: 0.4) : theme.borderCard,
+                backgroundColor: isDealer && isHook
+                    ? theme.danger.withValues(alpha: 0.08)
+                    : (theme.isDark ? theme.surfaceCard : Colors.white),
+                borderColor: isDealer && isHook
+                    ? theme.danger.withValues(alpha: 0.5)
+                    : (isDealer ? theme.accent.withValues(alpha: 0.4) : theme.borderCard),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
