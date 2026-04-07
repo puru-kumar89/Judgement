@@ -113,7 +113,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ),
                             ),
                             IconButton(
-                              icon: Icon(theme.isDark ? Icons.light_mode : Icons.dark_mode, color: theme.textMuted),
+                              icon: Icon(
+                                theme.isPremium 
+                                    ? Icons.auto_awesome 
+                                    : (theme.isDark ? Icons.light_mode : Icons.dark_mode), 
+                                color: theme.isPremium ? theme.accent : theme.textMuted
+                              ),
                               onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
                             ),
                           ],

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppThemeData {
   final bool isDark;
+  final bool isPremium;
   final Color background;
   final Color surfaceCard;
   final Color borderCard;
@@ -19,6 +20,7 @@ class AppThemeData {
 
   const AppThemeData({
     required this.isDark,
+    this.isPremium = false,
     required this.background,
     required this.surfaceCard,
     required this.borderCard,
@@ -33,6 +35,7 @@ class AppThemeData {
   factory AppThemeData.light() {
     return const AppThemeData(
       isDark: false,
+      isPremium: false,
       background: Color(0xFFF5F8FA),
       surfaceCard: Color(0xFFFFFFFF),
       borderCard: Color(0xFFE9EDF2),
@@ -48,6 +51,7 @@ class AppThemeData {
   factory AppThemeData.dark() {
     return const AppThemeData(
       isDark: true,
+      isPremium: false,
       background: Color(0xFF131416),
       surfaceCard: Color(0xFF1B1C1F),
       borderCard: Color(0x26FFFFFF),
@@ -57,6 +61,22 @@ class AppThemeData {
       overlay: Color(0x1AFFFFFF),
       textMain: Color(0xFFF5F7FA),
       textMuted: Color(0xFFB5BDCB),
+    );
+  }
+
+  factory AppThemeData.premium() {
+    return const AppThemeData(
+      isDark: true,
+      isPremium: true,
+      background: Color(0xFF000000),
+      surfaceCard: Color(0xE6050505),
+      borderCard: Color(0x33D4AF37),
+      invertedCard: Color(0xFF1B1C22),
+      accent: Color(0xFFD4AF37),
+      accent2: Color(0xFFC5A028),
+      overlay: Color(0x1AFFFFFF),
+      textMain: Color(0xFFFFFFFF),
+      textMuted: Color(0x99D4AF37),
     );
   }
 
