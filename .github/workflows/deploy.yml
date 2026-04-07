@@ -1,0 +1,32 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'any'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: cd flutter_app && flutter pub get
+
+      - name: Build Web App
+        run: |
+          cd flutter_app
+          flutter build web --release --base-href "/Judgement/"
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: flutter_app/build/web
+          branch: gh-pages
