@@ -439,7 +439,15 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
                       ],
                     ),
                   );
-                  if (ok == true && context.mounted) notifier.applyNewRules();
+                  if (ok == true && context.mounted) {
+                    notifier.applyNewRules();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Rules updated! Scoring changes apply now; card count & trump changes apply from next round.'),
+                        duration: Duration(seconds: 4),
+                      ),
+                    );
+                  }
 
                 } else if (choice == 'new') {
                   // Confirm and start fresh

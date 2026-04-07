@@ -265,17 +265,20 @@ class GameNotifier extends StateNotifier<GameState> {
     _persistGameState(); // persist the setup-phase so refresh shows home, game data intact
   }
 
-  /// Infer what phase the active game should return to based on current data.
+  /// Infer what phase the active game should return to based on current round data.
+  /// Deliberately simple — always returns a valid in-game phase.
   GamePhase _inferActivePhase() {
     if (state.rounds.isEmpty) return GamePhase.setup;
     final round = state.rounds[state.currentRoundIdx];
-    final hasScores = state.players.any((p) => p.totalScore != 0) ||
-        state.currentRoundIdx > 0;
-    if (!hasScores && round.bids.isEmpty) return GamePhase.bidding;
-    final allHaveActuals = state.players.every((p) => round.actuals.containsKey(p.id));
+    // Check if actuals are fully entered (scores calculated, go to leaderboard).
+    final allHaveActuals = state.players.isNotEmpty &&
+        state.players.every((p) => round.actuals.containsKey(p.id));
     if (allHaveActuals) return GamePhase.leaderboard;
-    final allHaveBids = state.players.every((p) => round.bids.containsKey(p.id));
+    // Check if all bids are in (bidding done, go to results to enter actuals).
+    final allHaveBids = state.players.isNotEmpty &&
+        state.players.every((p) => round.bids.containsKey(p.id));
     if (allHaveBids) return GamePhase.results;
+    // Default: go to bidding screen.
     return GamePhase.bidding;
   }
 
@@ -311,29 +314,15 @@ class GameNotifier extends StateNotifier<GameState> {
     _persistGameState();
   }
 
-  /// Apply updated settings to the current game without resetting scores.
-  /// New settings take effect from the next round.
-  void applyNewRules({
-    int? startingCards,
-    String? roundStyle,
-    bool? lenientOvertrick,
-    int? successMultiplier,
-    int? penaltyMultiplier,
-    int? overtrickBonus,
-    bool? includeNoTrump,
-  }) {
-    final next = state.copyWith(
-      startingCards: startingCards,
-      roundStyle: roundStyle,
-      lenientOvertrick: lenientOvertrick,
-      successMultiplier: successMultiplier,
-      penaltyMultiplier: penaltyMultiplier,
-      overtrickBonus: overtrickBonus,
-      includeNoTrump: includeNoTrump,
-      phase: _inferActivePhase(),
-    );
-    state = next;
-    _persistPrefs(next);
+  /// Apply current settings to the ongoing game and navigate back.
+  /// Settings are already in state (updated reactively via updateSettings).
+  /// Scoring rule changes take effect immediately; card count / round style
+  /// changes only affect rounds created after this point.
+  void applyNewRules() {
+    if (state.rounds.isEmpty) return; // Nothing to apply to.
+    final targetPhase = _inferActivePhase();
+    state = state.copyWith(phase: targetPhase);
+    _persistPrefs(state);
     _persistGameState();
   }
 
