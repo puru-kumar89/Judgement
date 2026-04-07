@@ -9,6 +9,14 @@ import '../../theme/app_theme.dart';
 
 /// Startup intro that features a spinning 3D card and a vertical name roll
 /// that lands on the brand name "KAAT" with a cinematic, fluid transition.
+enum SuitType { spade, heart, club, diamond }
+
+class _Suit {
+  final SuitType type;
+  final Color color;
+  const _Suit({required this.type, required this.color});
+}
+
 class StartIntroOverlay extends ConsumerStatefulWidget {
   final VoidCallback onFinished;
 
@@ -37,10 +45,10 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
   ];
 
   final List<_Suit> _suits = const [
-    _Suit(icon: '♠', color: Colors.white),
-    _Suit(icon: '♥', color: Color(0xFFC5A028)),
-    _Suit(icon: '♣', color: Colors.white),
-    _Suit(icon: '♦', color: Color(0xFFC5A028)),
+    _Suit(type: SuitType.spade, color: Colors.white),
+    _Suit(type: SuitType.heart, color: Color(0xFFC5A028)),
+    _Suit(type: SuitType.club, color: Colors.white),
+    _Suit(type: SuitType.diamond, color: Color(0xFFC5A028)),
   ];
 
   @override
@@ -197,11 +205,10 @@ class _CardWidget extends StatelessWidget {
         ],
       ),
       child: Center(
-        child: Text(
-          suit.icon,
-          style: TextStyle(
-            fontSize: 54,
-            fontWeight: FontWeight.w900,
+        child: CustomPaint(
+          size: const Size(60, 60),
+          painter: SuitPainter(
+            type: suit.type,
             color: suit.color,
           ),
         ),
@@ -210,10 +217,62 @@ class _CardWidget extends StatelessWidget {
   }
 }
 
-class _Suit {
-  final String icon;
+class SuitPainter extends CustomPainter {
+  final SuitType type;
   final Color color;
-  const _Suit({required this.icon, required this.color});
+
+  SuitPainter({required this.type, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    final w = size.width;
+    final h = size.height;
+
+    switch (type) {
+      case SuitType.heart:
+        path.moveTo(w * 0.5, h * 0.25);
+        path.cubicTo(w * 0.5, h * 0.2, w * 0.25, h * 0, w * 0.05, h * 0.3);
+        path.cubicTo(w * -0.15, h * 0.6, w * 0.5, h * 1, w * 0.5, h * 1);
+        path.cubicTo(w * 0.5, h * 1, w * 1.15, h * 0.6, w * 0.95, h * 0.3);
+        path.cubicTo(w * 0.75, h * 0, w * 0.5, h * 0.2, w * 0.5, h * 0.25);
+        break;
+      case SuitType.diamond:
+        path.moveTo(w * 0.5, 0);
+        path.lineTo(w, h * 0.5);
+        path.lineTo(w * 0.5, h);
+        path.lineTo(0, h * 0.5);
+        path.close();
+        break;
+      case SuitType.spade:
+        path.reset();
+        path.moveTo(w * 0.5, 0);
+        path.cubicTo(w * 0.05, h * 0.35, w * 0, h * 0.8, w * 0.45, h * 0.8);
+        path.lineTo(w * 0.35, h);
+        path.lineTo(w * 0.65, h);
+        path.lineTo(w * 0.55, h * 0.8);
+        path.cubicTo(w * 1, h * 0.8, w * 0.95, h * 0.35, w * 0.5, 0);
+        break;
+      case SuitType.club:
+        path.addOval(Rect.fromCircle(center: Offset(w * 0.5, h * 0.3), radius: w * 0.22));
+        path.addOval(Rect.fromCircle(center: Offset(w * 0.28, h * 0.6), radius: w * 0.22));
+        path.addOval(Rect.fromCircle(center: Offset(w * 0.72, h * 0.6), radius: w * 0.22));
+        path.moveTo(w * 0.5, h * 0.55);
+        path.lineTo(w * 0.35, h);
+        path.lineTo(w * 0.65, h);
+        path.close();
+        break;
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _StackedNameRoll extends StatelessWidget {
