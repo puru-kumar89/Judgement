@@ -89206,36 +89206,34 @@ A.rU.prototype={}
 A.Dd.prototype={
 ag(){return new A.Hy(null,null)}}
 A.Hy.prototype={
-ar(){var s,r,q,p,o,n,m,l,k,j,i,h,g=this,f=null
-g.aJ()
-q=A.bI(f,B.GA,f,f,g)
+ar(){var s,r,q,p,o,n,m,l,k,j,i=this,h=null
+i.aJ()
+q=A.bI(h,B.GA,h,h,i)
 q.bo(0)
-g.w!==$&&A.b8()
-g.w=q
+i.w!==$&&A.b8()
+i.w=q
 try{p=$.aKH()
-o=p.i(0,"isios")
-s=o==null?!1:o
-n=p.i(0,"isStandalone")
-r=n==null?!1:n
-g.as=s&&!r}catch(m){g.as=!1}p=A.bI(f,B.GF,f,f,g)
-l=p.a
-k=p.b
-j=p.e
+s=p.i(0,"isios")
+r=p.i(0,"isStandalone")
+i.as=J.d(s,!0)&&!J.d(r,!0)}catch(o){i.as=!1}p=A.bI(h,B.GF,h,h,i)
+n=p.a
+m=p.b
+l=p.e
 p.dX(0)
-i=p.x
-i===$&&A.a()
-h=j.a/1e6
-i=k===l?0:(A.z(i,l,k)-l)/(k-l)*h
-p.xK(new A.as2(l,k,!1,f,p.ga7m(),h,i,B.by))
-g.x!==$&&A.b8()
-g.x=p
-p=A.bI(f,B.GB,f,f,g)
-g.y!==$&&A.b8()
-g.y=p
+k=p.x
+k===$&&A.a()
+j=l.a/1e6
+k=m===n?0:(A.z(k,n,m)-n)/(m-n)*j
+p.xK(new A.as2(n,m,!1,h,p.ga7m(),j,k,B.by))
+i.x!==$&&A.b8()
+i.x=p
+p=A.bI(h,B.GB,h,h,i)
+i.y!==$&&A.b8()
+i.y=p
 q.b6()
 q=q.bP$
 q.b=!0
-q.a.push(new A.atK(g))},
+q.a.push(new A.atK(i))},
 Or(){var s,r=this
 if(r.z)return
 r.z=!0
