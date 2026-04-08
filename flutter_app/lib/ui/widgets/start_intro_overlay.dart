@@ -87,7 +87,9 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
     // Coordination: wait for settle, then finish.
     _mainCtrl.addStatusListener((status) {
        if (status == AnimationStatus.completed) {
-         Future.delayed(const Duration(milliseconds: 250), _finish);
+         if (!_isIOSUninstalled) {
+           Future.delayed(const Duration(milliseconds: 250), _finish);
+         }
        }
     });
   }
@@ -118,7 +120,9 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
         opacity: Tween(begin: 1.0, end: 0.0).animate(_fadeCtrl),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: _finish,
+          onTap: () {
+            if (!_isIOSUninstalled) _finish();
+          },
           child: Container(
             color: Colors.black, // Dark cinematic backdrop
             child: AnimatedBuilder(
@@ -192,29 +196,48 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
                           opacity: Tween(begin: 0.0, end: 1.0).animate(
                             CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.1, 0.4)),
                           ),
-                          child: TextButton.icon(
-                            onPressed: () => setState(() => _showAssistant = true),
-                            icon: const Icon(Icons.add_box_outlined, color: Color(0xFFC5A028)),
-                            label: const Text(
-                              'INSTALL FOR BEST EXPERIENCE',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () => setState(() => _showAssistant = true),
+                                icon: const Icon(Icons.add_box_outlined, color: Color(0xFFC5A028)),
+                                label: const Text(
+                                  'INSTALL FOR BEST EXPERIENCE',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: Colors.white.withValues(alpha: 0.05),
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(100),
+                                    side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                                  ),
+                                ),
                               ),
-                            ),
-                            style: TextButton.styleFrom(
-                              backgroundColor: Colors.white.withValues(alpha: 0.05),
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(100),
-                                side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                              const SizedBox(height: 12),
+                              TextButton(
+                                onPressed: _finish,
+                                child: Text(
+                                  'CONTINUE TO GAME',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.4),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
                       ),
+
                   ],
                 );
               },
