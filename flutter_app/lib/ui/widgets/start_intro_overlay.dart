@@ -67,9 +67,9 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
 
     // Smart PWA detection
     try {
-      final isios = js.context['isios'] ?? false;
-      final isStandalone = js.context['isStandalone'] ?? false;
-      _isIOSUninstalled = isios && !isStandalone;
+      final isios = js.context['isios'];
+      final isStandalone = js.context['isStandalone'];
+      _isIOSUninstalled = (isios == true) && (isStandalone != true);
     } catch (_) {
       _isIOSUninstalled = false;
     }
