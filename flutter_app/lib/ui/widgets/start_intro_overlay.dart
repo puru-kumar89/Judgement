@@ -4,8 +4,11 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+// Conditional import for PWA detection
+import 'dart:js' as js;
 import '../../theme/theme_provider.dart';
 import '../../theme/app_theme.dart';
+import 'ios_install_assistant.dart';
 
 /// Startup intro that features a spinning 3D card and a vertical name roll
 /// that lands on the brand name "KAAT" with a cinematic, fluid transition.
@@ -32,6 +35,8 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
   late final AnimationController _suitCtrl; // Spin loop
   late final AnimationController _fadeCtrl; // Final screen fade out
   bool _finished = false;
+  bool _showAssistant = false;
+  bool _isIOSUninstalled = false;
 
   final List<String> _nameVariants = const [
     'Kaat Judgement',
@@ -59,6 +64,15 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
        vsync: this,
        duration: const Duration(milliseconds: 2400),
     )..forward();
+
+    // Smart PWA detection
+    try {
+      final isios = js.context['isios'] ?? false;
+      final isStandalone = js.context['isStandalone'] ?? false;
+      _isIOSUninstalled = isios && !isStandalone;
+    } catch (_) {
+      _isIOSUninstalled = false;
+    }
 
     _suitCtrl = AnimationController(
        vsync: this,
@@ -163,6 +177,44 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
                         ),
                       ],
                     ),
+
+                    // iOS Install Assistant Overlay
+                    if (_showAssistant)
+                      IosInstallAssistant(
+                        onDismiss: () => setState(() => _showAssistant = false),
+                      ),
+
+                    // Premium Install Button (only for uninstalled iOS users)
+                    if (_isIOSUninstalled && !_showAssistant && outroT > 0.8)
+                      Positioned(
+                        bottom: 48 + (MediaQuery.of(context).padding.bottom),
+                        child: FadeTransition(
+                          opacity: Tween(begin: 0.0, end: 1.0).animate(
+                            CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.8, 1.0)),
+                          ),
+                          child: TextButton.icon(
+                            onPressed: () => setState(() => _showAssistant = true),
+                            icon: const Icon(Icons.add_box_outlined, color: Color(0xFFC5A028)),
+                            label: const Text(
+                              'INSTALL FOR BEST EXPERIENCE',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.white.withValues(alpha: 0.05),
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(100),
+                                side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 );
               },

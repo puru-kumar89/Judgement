@@ -43,6 +43,10 @@
   <script>
     // The value below is injected by flutter build, do not touch.
     const serviceWorkerVersion = null;
+
+    // PWA Standalone Detection for iOS and others
+    window.isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    window.isios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
