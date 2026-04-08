@@ -185,12 +185,12 @@ class _StartIntroOverlayState extends ConsumerState<StartIntroOverlay>
                       ),
 
                     // Premium Install Button (only for uninstalled iOS users)
-                    if (_isIOSUninstalled && !_showAssistant && outroT > 0.8)
+                    if (_isIOSUninstalled && !_showAssistant && outroT > 0.1)
                       Positioned(
                         bottom: 48 + (MediaQuery.of(context).padding.bottom),
                         child: FadeTransition(
                           opacity: Tween(begin: 0.0, end: 1.0).animate(
-                            CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.8, 1.0)),
+                            CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.1, 0.4)),
                           ),
                           child: TextButton.icon(
                             onPressed: () => setState(() => _showAssistant = true),

@@ -46,7 +46,7 @@
 
     // PWA Standalone Detection for iOS and others
     window.isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    window.isios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    window.isios = (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
   </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
