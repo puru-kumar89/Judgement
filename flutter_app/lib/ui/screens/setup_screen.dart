@@ -205,14 +205,14 @@ class _SetupScreenState extends ConsumerState<SetupScreen> with SingleTickerProv
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text('STARTING CARDS', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                          Text('Pick how many each player starts with', style: TextStyle(fontSize: 11, color: theme.textMuted)),
+                          Text('Max for ${state.players.length} players is ${notifier.maxPossibleCards}', style: TextStyle(fontSize: 11, color: theme.accent, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
                     StepperInput(
                       value: state.startingCards,
                       min: 1,
-                      max: 20,
+                      max: notifier.maxPossibleCards,
                       onChanged: (val) => notifier.updateSettings(startingCards: val),
                       compact: true,
                     ),

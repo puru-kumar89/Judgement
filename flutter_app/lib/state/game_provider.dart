@@ -197,8 +197,15 @@ class GameNotifier extends StateNotifier<GameState> {
     int? overtrickBonus,
     bool? includeNoTrump,
   }) {
+    int? finalStartingCards = startingCards;
+    if (finalStartingCards != null) {
+      finalStartingCards = finalStartingCards.clamp(1, maxPossibleCards);
+    } else {
+      finalStartingCards = state.startingCards.clamp(1, maxPossibleCards);
+    }
+
     final next = state.copyWith(
-      startingCards: startingCards,
+      startingCards: finalStartingCards,
       roundStyle: roundStyle,
       lenientOvertrick: lenientOvertrick,
       successMultiplier: successMultiplier,
@@ -211,13 +218,20 @@ class GameNotifier extends StateNotifier<GameState> {
     _persistGameState(snapshot: next);
   }
 
+  int get maxPossibleCards => 52 ~/ (state.players.isEmpty ? 1 : state.players.length);
+
   // ─── Player management ──────────────────────────────────────────
 
   void addPlayer() {
     if (state.players.length >= 10) return;
     final newList = List<Player>.from(state.players);
     newList.add(Player(id: DateTime.now().millisecondsSinceEpoch.toString(), name: ''));
-    state = state.copyWith(players: newList);
+    
+    // Clamp starting cards after adding a player
+    final newMax = 52 ~/ newList.length;
+    final clampedCards = state.startingCards.clamp(1, newMax);
+    
+    state = state.copyWith(players: newList, startingCards: clampedCards);
     _persistGameState();
     _persistPlayers(state.players);
   }
@@ -225,7 +239,12 @@ class GameNotifier extends StateNotifier<GameState> {
   void removePlayer(String id) {
     if (state.players.length <= 3) return;
     final newList = state.players.where((p) => p.id != id).toList();
-    state = state.copyWith(players: newList);
+    
+    // No need to clamp down on remove, but we keep the logic consistent
+    final newMax = 52 ~/ newList.length;
+    final clampedCards = state.startingCards.clamp(1, newMax);
+
+    state = state.copyWith(players: newList, startingCards: clampedCards);
     _persistGameState();
     _persistPlayers(state.players);
   }
@@ -457,15 +476,22 @@ class GameNotifier extends StateNotifier<GameState> {
       // Constant mode: card count never changes.
       nextCards = currentCards;
     } else {
-      // Countdown mode: sawtooth between 1 and startingCards (inclusive).
+      // Countdown mode: sawtooth bounce between 1 and startingCards.
+      // We implement a "Strict Bounce" (e.g., ... 2 -> 1 -> 2 ...) 
+      // where peak and valley are NOT repeated.
       nextCards = currentCards + step;
+      
       if (nextCards < 1) {
         step = 1;
-        nextCards = 1;
+        nextCards = 2; // Immediately skip 1 to avoid double-printing 1
       } else if (nextCards > state.startingCards) {
         step = -1;
-        nextCards = state.startingCards;
+        nextCards = state.startingCards - 1; // Immediately skip peak to avoid double-peak
       }
+      
+      // Safety: if startingCards is 1, nextCards must be 1.
+      if (nextCards < 1) nextCards = 1;
+      if (nextCards > state.startingCards) nextCards = state.startingCards;
     }
 
     final activeSuits = state.includeNoTrump
