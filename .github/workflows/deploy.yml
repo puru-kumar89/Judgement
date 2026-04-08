@@ -25,7 +25,8 @@ jobs:
       - name: Build Web App
         run: |
           cd flutter_app
-          flutter build web --release --base-href "./"
+          flutter build web --release --base-href "/"
+          sed -i 's/<base href="\/">/<base href=".\/">/g' build/web/index.html
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
