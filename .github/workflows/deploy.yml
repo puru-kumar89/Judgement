@@ -25,7 +25,7 @@ jobs:
       - name: Build Web App
         run: |
           cd flutter_app
-          flutter build web --release --base-href "/"
+          flutter build web --release --base-href "./"
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
@@ -38,6 +38,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: kaat
+          projectName: pudgement
           directory: flutter_app/build/web
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
